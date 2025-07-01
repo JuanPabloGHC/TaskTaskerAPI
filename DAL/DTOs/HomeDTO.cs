@@ -1,4 +1,6 @@
-﻿namespace TaskTaskerAPI.DAL.DTOs
+﻿using TaskTaskerAPI.DAL.Entities;
+
+namespace TaskTaskerAPI.DAL.DTOs
 {
     public class HomeDTO
     {
@@ -21,6 +23,13 @@
             this.id = id;
             this.name = name;
             this.image = image;
+        }
+
+        public HomeDTO(Home home)
+        {
+            this.id = home.id;
+            this.name = home.name;
+            this.image = home.image;
         }
 
         #endregion

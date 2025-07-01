@@ -1,4 +1,6 @@
-﻿namespace TaskTaskerAPI.DAL.DTOs
+﻿using TaskTaskerAPI.DAL.Entities;
+
+namespace TaskTaskerAPI.DAL.DTOs
 {
     public class AchievementDTO
     {
@@ -24,6 +26,14 @@
             this.name = name;
             this.description = description;
             this.image = image;
+        }
+
+        public AchievementDTO(Achievement achievement)
+        {
+            this.id = achievement.id;
+            this.name = achievement.name;
+            this.description = achievement.description;
+            this.image = achievement.image;
         }
 
         #endregion

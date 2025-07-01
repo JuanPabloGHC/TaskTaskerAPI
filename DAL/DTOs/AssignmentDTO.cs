@@ -1,4 +1,6 @@
-﻿namespace TaskTaskerAPI.DAL.DTOs
+﻿using TaskTaskerAPI.DAL.Entities;
+
+namespace TaskTaskerAPI.DAL.DTOs
 {
     public class AssignmentDTO
     {
@@ -27,6 +29,15 @@
             this.date = date;
             this.status = status;
             this.task = task;
+        }
+
+        public AssignmentDTO(Assignment assignment)
+        {
+            this.id = assignment.id;
+            this.date = assignment.date;
+            this.member = new MemberDTO(assignment.member, new List<AchievementDTO>(), new List<AssignmentDTO>());
+            this.status = new StatusDTO(assignment.status);
+            this.task = new TaskDTO(assignment.task);
         }
 
         #endregion

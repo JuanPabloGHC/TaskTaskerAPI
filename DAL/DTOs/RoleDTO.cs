@@ -1,4 +1,6 @@
-﻿namespace TaskTaskerAPI.DAL.DTOs
+﻿using TaskTaskerAPI.DAL.Entities;
+
+namespace TaskTaskerAPI.DAL.DTOs
 {
     public class RoleDTO
     {
@@ -21,6 +23,13 @@
             this.id = id;
             this.name = name;
             this.image = image;
+        }
+
+        public RoleDTO(Role role)
+        {
+            this.id = role.id;
+            this.name = role.name;
+            this.image = role.image;
         }
 
         #endregion

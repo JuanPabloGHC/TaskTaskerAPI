@@ -1,4 +1,6 @@
-﻿namespace TaskTaskerAPI.DAL.DTOs
+﻿using TaskTaskerAPI.DAL.Entities;
+
+namespace TaskTaskerAPI.DAL.DTOs
 {
     public class StatusDTO
     {
@@ -21,6 +23,13 @@
             this.id = id;
             this.name = name;
             this.color = color;
+        }
+
+        public StatusDTO(Status status)
+        {
+            this.id = status.id;
+            this.name = status.name;
+            this.color = status.color;
         }
 
         #endregion
