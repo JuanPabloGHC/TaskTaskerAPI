@@ -36,18 +36,15 @@ namespace TaskTaskerAPI.DAL.Context
 
         #region CONSTRUCTOR
 
-        public TaskTaskerContext(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+        public TaskTaskerContext(DbContextOptions<TaskTaskerContext> options) : base(options) { }
 
         #endregion
 
         #region EVENT HANDLING
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            optionsBuilder.UseNpgsql(Configuration.GetConnectionString("Database"));
+            base.OnModelCreating(modelBuilder);
         }
 
         #endregion

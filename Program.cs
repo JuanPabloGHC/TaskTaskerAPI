@@ -1,14 +1,17 @@
+using Microsoft.EntityFrameworkCore;
 using TaskTaskerAPI.DAL.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+DotNetEnv.Env.Load();
 
+// Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<TaskTaskerContext>();
+builder.Services.AddDbContext<TaskTaskerContext>(options =>
+    options.UseNpgsql(Environment.GetEnvironmentVariable("DATABASE")));
 
 var app = builder.Build();
 
