@@ -1,0 +1,29 @@
+﻿namespace TaskTaskerAPI.DAL.DTOs
+{
+    public class StatusDTO
+    {
+        #region PROPERTIES
+
+        public int id { get; set; }
+
+        public string name { get; set; }
+
+        public string color { get; set; }
+
+        #endregion
+
+        #region CONSTRUCTORS
+
+        public StatusDTO() { }
+
+        public StatusDTO(int id, string name, string color)
+        {
+            this.id = id;
+            this.name = name;
+            this.color = color;
+        }
+
+        #endregion
+
+    }
+}
