@@ -7,9 +7,10 @@ namespace TaskTaskerAPI.DAL.Interfaces
     public interface IMemberRepository : IDisposable
     {
         Task<IEnumerable<Member>> GetHomeMembers(int homeID);
-        Task<Member> GetMemberByID(int personID, int homeID);
+        Task<Member?> GetMemberByID(int id);
         Task CreateMember(MemberDTO memberDTO);
         Task UpdateMember(MemberDTO memberDTO);
         Task DeleteMember(int id);
+        Task SaveChanges();
     }
 }
