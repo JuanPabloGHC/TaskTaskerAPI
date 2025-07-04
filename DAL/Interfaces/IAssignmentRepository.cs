@@ -8,6 +8,7 @@ namespace TaskTaskerAPI.DAL.Interfaces
     {
         Task<IEnumerable<Assignment>> GetHomeAssignments(int homeID);
         Task<IEnumerable<Assignment>> GetMemberAssignments(int memberID);
+        Task<Assignment?> GetAssignmentByID(int id);
         Task CreateAssignment(AssignmentDTO assignmentDTO);
         Task UpdateAssignment(AssignmentDTO assignmentDTO);
         Task DeleteAssignment(int id);
