@@ -4,7 +4,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Interfaces
 {
-    public interface ITaskRepository
+    public interface ITaskRepository : IDisposable
     {
         Task<IEnumerable<Entities.Task>> GetAllTasks();
         Task CreateTask(TaskDTO taskDTO);

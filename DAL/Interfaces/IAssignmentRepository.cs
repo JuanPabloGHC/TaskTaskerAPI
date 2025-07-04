@@ -4,7 +4,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Interfaces
 {
-    public interface IAssignmentRepository
+    public interface IAssignmentRepository : IDisposable
     {
         Task<IEnumerable<Assignment>> GetHomeAssignments(int homeID);
         Task<IEnumerable<Assignment>> GetMemberAssignments(int memberID);

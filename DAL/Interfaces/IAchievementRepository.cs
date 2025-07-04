@@ -4,7 +4,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Interfaces
 {
-    public interface IAchievementRepository
+    public interface IAchievementRepository : IDisposable
     {
         Task<IEnumerable<Achievement>> GetAllAchievements();
         Task CreateAchievement(AchievementDTO achievementDTO);

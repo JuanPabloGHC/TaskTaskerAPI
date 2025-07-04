@@ -4,7 +4,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Interfaces
 {
-    public interface IRoleRepository
+    public interface IRoleRepository : IDisposable
     {
         Task<IEnumerable<Role>> GetAllRoles();
         Task CreateRole(RoleDTO roleDTO);

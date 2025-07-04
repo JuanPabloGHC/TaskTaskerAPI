@@ -4,7 +4,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Interfaces
 {
-    public interface IStatusRepository
+    public interface IStatusRepository : IDisposable
     {
         Task<IEnumerable<Status>> GetAllStatuses();
         Task CreateStatus(StatusDTO statusDTO);

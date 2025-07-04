@@ -4,7 +4,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Interfaces
 {
-    public interface IMemberRepository
+    public interface IMemberRepository : IDisposable
     {
         Task<IEnumerable<Member>> GetHomeMembers(int homeID);
         Task<Member> GetMemberByID(int personID, int homeID);
