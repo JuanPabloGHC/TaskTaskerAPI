@@ -51,7 +51,7 @@ namespace TaskTaskerAPI.DAL.Repositories
             await this._context.AddAsync(achievement);
         }
 
-        public async Task UpdateAchievement(Achievement achievementDTO)
+        public async Task UpdateAchievement(AchievementDTO achievementDTO)
         {
             Achievement? achievement = await this.GetAchievementByID(achievementDTO.id);
 
