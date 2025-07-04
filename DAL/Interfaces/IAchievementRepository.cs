@@ -7,9 +7,10 @@ namespace TaskTaskerAPI.DAL.Interfaces
     public interface IAchievementRepository : IDisposable
     {
         Task<IEnumerable<Achievement>> GetAllAchievements();
+        Task<Achievement?> GetAchievementByID(int id);
         Task CreateAchievement(AchievementDTO achievementDTO);
-        Task UpdateAchievement(Achievement achievementDTO);
-        Task DeleteAchievement(Achievement achievement);
+        Task UpdateAchievement(AchievementDTO achievementDTO);
+        Task DeleteAchievement(int id);
         Task SaveChanges();
     }
 }
