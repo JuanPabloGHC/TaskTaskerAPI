@@ -6,9 +6,9 @@ namespace TaskTaskerAPI.DAL.Interfaces
 {
     public interface IPersonRepository : IDisposable
     {
-        Person GetPersonByID(int id);
-        Task CreatePerson(PersonDTO personDTO);
-        Task UpdatePerson(PersonDTO personDTO);
+        Task<Person?> GetPersonByID(int id);
+        Task<Person> CreatePerson(PersonDTO personDTO);
+        Task<Person> UpdatePerson(PersonDTO personDTO);
         Task DeletePerson(int id);
         Task SaveChanges();
     }
