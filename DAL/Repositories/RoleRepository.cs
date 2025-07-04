@@ -13,7 +13,7 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         private TaskTaskerContext _context;
 
-        private bool disposed;
+        private bool disposed = false;
 
         #endregion
 
