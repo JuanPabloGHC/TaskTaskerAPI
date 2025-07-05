@@ -31,6 +31,7 @@ namespace TaskTaskerAPI.DAL.Repositories
         {
             return await this._context.Attainments
                 .Where(a => a.member_id == memberID)
+                .Include(a => a.achievement)
                 .ToListAsync();
         }
 
@@ -43,6 +44,7 @@ namespace TaskTaskerAPI.DAL.Repositories
 
             await this._context.AddAsync(attainment);
         }
+
         protected virtual void Dispose(bool disposing)
         {
             if (!this.disposed)

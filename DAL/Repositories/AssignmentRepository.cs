@@ -32,6 +32,10 @@ namespace TaskTaskerAPI.DAL.Repositories
         {
             return await this._context.Assignments
                 .Where(a => a.member.home_id == homeID)
+                .Include(a => a.task)
+                .Include(a => a.member)
+                .Include(a => a.member.person)
+                .Include(a => a.member.role)
                 .ToListAsync();
         }
 
@@ -39,6 +43,7 @@ namespace TaskTaskerAPI.DAL.Repositories
         {
             return await this._context.Assignments
                 .Where(a => a.member_id == memberID)
+                .Include(a => a.task)
                 .ToListAsync();
         }
 
