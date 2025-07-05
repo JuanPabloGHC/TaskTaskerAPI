@@ -59,6 +59,21 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (this.Exists(assignmentDTO.member.id, assignmentDTO.task.id, assignmentDTO.date))
                 throw new Exception("409;Assignment already exists");
 
+            MemberRepository memberRepository = new MemberRepository(this._context);
+
+            TaskRepository taskRepository = new TaskRepository(this._context);
+
+            StatusRepository statusRepository = new StatusRepository(this._context);
+
+            if (await memberRepository.GetMemberByID(assignmentDTO.member.id) == null)
+                throw new Exception("404;Member not found");
+
+            if (await taskRepository.GetTaskByID(assignmentDTO.task.id) == null)
+                throw new Exception("404;Task not found");
+
+            if (await statusRepository.GetStatusByID(assignmentDTO.status.id) == null)
+                throw new Exception("404;Status not found");
+
             Assignment assignment = new Assignment(assignmentDTO);
 
             await this._context.Assignments.AddAsync(assignment);
@@ -73,6 +88,16 @@ namespace TaskTaskerAPI.DAL.Repositories
 
             if (this.Exists(assignmentDTO.member.id, assignmentDTO.task.id, assignmentDTO.date))
                 throw new Exception("409;Assignment already exists");
+
+            TaskRepository taskRepository = new TaskRepository(this._context);
+
+            StatusRepository statusRepository = new StatusRepository(this._context);
+
+            if (await taskRepository.GetTaskByID(assignmentDTO.task.id) == null)
+                throw new Exception("404;Task not found");
+
+            if (await statusRepository.GetStatusByID(assignmentDTO.status.id) == null)
+                throw new Exception("404;Status not found");
 
             assignment.task_id = assignmentDTO.task.id;
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TaskTaskerAPI.DAL.Context;
+using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
 using Task = System.Threading.Tasks.Task;
@@ -39,6 +40,16 @@ namespace TaskTaskerAPI.DAL.Repositories
         {
             if (this.Exists(memberID, achievementID))
                 throw new Exception("409;Attainment already exists");
+
+            MemberRepository memberRepository = new MemberRepository(this._context);
+
+            AchievementRepository achievementRepository  = new AchievementRepository(this._context);
+
+            if (await memberRepository.GetMemberByID(memberID) == null)
+                throw new Exception("404;Member not found");
+
+            if (await achievementRepository.GetAchievementByID(achievementID) == null)
+                throw new Exception("404;Task not found");
 
             Attainment attainment = new Attainment(0, memberID, achievementID);
 
