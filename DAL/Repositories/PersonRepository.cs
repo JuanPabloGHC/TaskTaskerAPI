@@ -35,6 +35,13 @@ namespace TaskTaskerAPI.DAL.Repositories
             return await this._context.Persons.FindAsync(id);
         }
 
+        public async Task<Person?> GetPersonByNameAndPassword(string name, string password)
+        {
+            return await this._context.Persons
+                .Where(p => p.name == name && p.password == password)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<Person> CreatePerson(PersonDTO personDTO)
         {
             if (this.Exists(Columns.PHONE_COLUMN, personDTO.phone))
