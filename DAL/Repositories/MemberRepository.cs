@@ -28,6 +28,15 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         #region PUBLIC METHODS
 
+        public async Task<IEnumerable<Member>> GetMemberHomes(int personID)
+        {
+            return await this._context.Members
+                .Include(m => m.home)
+                .Include(m => m.person)
+                .Where(m => m.person_id == personID)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Member>> GetHomeMembers(int homeID)
         {
             return await this._context.Members
