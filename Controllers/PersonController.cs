@@ -42,7 +42,7 @@ namespace TaskTaskerAPI.Controllers
                 return Created("", new ApiResponse<PersonDTO>
                 {
                     StatusCode = 201,
-                    Message = "User created",
+                    Message = "User created successfully",
                     Data = personDTO
                 });
             }
@@ -128,7 +128,7 @@ namespace TaskTaskerAPI.Controllers
                 return Ok(new ApiResponse<PersonDTO>
                 {
                     StatusCode = 200,
-                    Message = "",
+                    Message = "User modified successfully",
                     Data = personDTO
                 });
             }
@@ -168,7 +168,7 @@ namespace TaskTaskerAPI.Controllers
                 return StatusCode(204, new ApiResponse<string>
                 {
                     StatusCode = 204,
-                    Message = "User deleted",
+                    Message = "User deleted successfully",
                     Data = String.Empty
                 });
             }
