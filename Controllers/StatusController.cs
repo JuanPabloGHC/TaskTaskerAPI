@@ -7,20 +7,20 @@ using TaskTaskerAPI.Utilities;
 namespace TaskTaskerAPI.Controllers
 {
     [ApiController]
-    [Route("api/role")]
-    public class RoleController : Controller
+    [Route("api/status")]
+    public class StatusController : Controller
     {
         #region DATA MEMBERS
 
-        private IRoleRepository roleRepository;
+        private IStatusRepository statusRepository;
 
         #endregion
 
         #region CONSTRUCTOR
 
-        public RoleController(IRoleRepository roleRepository)
+        public StatusController(IStatusRepository statusRepository)
         {
-            this.roleRepository = roleRepository;
+            this.statusRepository = statusRepository;
         }
 
         #endregion
@@ -33,20 +33,20 @@ namespace TaskTaskerAPI.Controllers
         {
             try
             {
-                List<Role> roles = (List<Role>)await this.roleRepository.GetAllRoles();
+                List<Status> statuses = (List<Status>)await this.statusRepository.GetAllStatuses();
 
-                List<RoleDTO> rolesDTO = new List<RoleDTO>();
+                List<StatusDTO> statusesDTO = new List<StatusDTO>();
 
-                foreach (Role role in roles)
+                foreach (Status status in statuses)
                 {
-                    rolesDTO.Add(new RoleDTO(role));
+                    statusesDTO.Add(new StatusDTO(status));
                 }
 
-                return Ok(new ApiResponse<List<RoleDTO>>
+                return Ok(new ApiResponse<List<StatusDTO>>
                 {
                     StatusCode = 200,
                     Message = "",
-                    Data = rolesDTO
+                    Data = statusesDTO
                 });
             }
             catch (Exception ex)
@@ -57,18 +57,18 @@ namespace TaskTaskerAPI.Controllers
 
         [HttpPost]
         [Route("create")]
-        public async Task<IActionResult> Create([FromBody] RoleDTO roleDTO)
+        public async Task<IActionResult> Create([FromBody] StatusDTO statusDTO)
         {
             try
             {
-                await this.roleRepository.CreateRole(roleDTO);
+                await this.statusRepository.CreateStatus(statusDTO);
 
-                await this.roleRepository.SaveChanges();
+                await this.statusRepository.SaveChanges();
 
                 return Created("", new ApiResponse<string>
                 {
                     StatusCode = 201,
-                    Message = "Role created successfully",
+                    Message = "Status created successfully",
                     Data = String.Empty
                 });
             }
@@ -80,18 +80,18 @@ namespace TaskTaskerAPI.Controllers
 
         [HttpPatch]
         [Route("update")]
-        public async Task<IActionResult> Update([FromBody] RoleDTO roleDTO)
+        public async Task<IActionResult> Update([FromBody] StatusDTO statusDTO)
         {
             try
             {
-                await this.roleRepository.UpdateRole(roleDTO);
+                await this.statusRepository.UpdateStatus(statusDTO);
 
-                await this.roleRepository.SaveChanges();
+                await this.statusRepository.SaveChanges();
 
                 return Ok(new ApiResponse<string>
                 {
                     StatusCode = 200,
-                    Message = "Role modified successfully",
+                    Message = "Status modified successfully",
                     Data = String.Empty
                 });
             }
@@ -107,14 +107,14 @@ namespace TaskTaskerAPI.Controllers
         {
             try
             {
-                await this.roleRepository.DeleteRole(id);
+                await this.statusRepository.DeleteStatus(id);
 
-                await this.roleRepository.SaveChanges();
+                await this.statusRepository.SaveChanges();
 
                 return StatusCode(204, new ApiResponse<string>
                 {
                     StatusCode = 204,
-                    Message = "Role deleted successfully",
+                    Message = "Status deleted successfully",
                     Data = String.Empty
                 });
             }
@@ -128,7 +128,7 @@ namespace TaskTaskerAPI.Controllers
 
         #region PRIVATE METHODS
 
-        private IActionResult CatchReturn(Exception ex)
+        public IActionResult CatchReturn(Exception ex)
         {
             string[] error = ex.Message.Split(';');
 
