@@ -51,24 +51,7 @@ namespace TaskTaskerAPI.Controllers
             }
             catch (Exception ex)
             {
-                string[] error = ex.Message.Split(';');
-
-                if (error.Length == 1)
-                {
-                    return BadRequest(new ApiResponse<string>
-                    {
-                        StatusCode = 400,
-                        Message = ex.Message,
-                        Data = String.Empty
-                    });
-                }
-
-                return StatusCode(Convert.ToInt32(error[0]), new ApiResponse<string>
-                {
-                    StatusCode = Convert.ToInt32(error[0]),
-                    Message = error[1],
-                    Data = String.Empty
-                });
+                return this.CatchReturn(ex);
             }
         }
 
@@ -91,24 +74,7 @@ namespace TaskTaskerAPI.Controllers
             }
             catch (Exception ex)
             {
-                string[] error = ex.Message.Split(';');
-
-                if (error.Length == 1)
-                {
-                    return BadRequest(new ApiResponse<string>
-                    {
-                        StatusCode = 400,
-                        Message = ex.Message,
-                        Data = String.Empty
-                    });
-                }
-
-                return StatusCode(Convert.ToInt32(error[0]), new ApiResponse<string>
-                {
-                    StatusCode = Convert.ToInt32(error[0]),
-                    Message = error[1],
-                    Data = String.Empty
-                });
+                return this.CatchReturn(ex);
             }
         }
 
@@ -131,24 +97,7 @@ namespace TaskTaskerAPI.Controllers
             }
             catch (Exception ex)
             {
-                string[] error = ex.Message.Split(';');
-
-                if (error.Length == 1)
-                {
-                    return BadRequest(new ApiResponse<string>
-                    {
-                        StatusCode = 400,
-                        Message = ex.Message,
-                        Data = String.Empty
-                    });
-                }
-
-                return StatusCode(Convert.ToInt32(error[0]), new ApiResponse<string>
-                {
-                    StatusCode = Convert.ToInt32(error[0]),
-                    Message = error[1],
-                    Data = String.Empty
-                });
+                return this.CatchReturn(ex);
             }
         }
 
@@ -171,25 +120,34 @@ namespace TaskTaskerAPI.Controllers
             }
             catch (Exception ex)
             {
-                string[] error = ex.Message.Split(';');
+                return this.CatchReturn(ex);
+            }
+        }
 
-                if (error.Length == 1)
-                {
-                    return BadRequest(new ApiResponse<string>
-                    {
-                        StatusCode = 400,
-                        Message = ex.Message,
-                        Data = String.Empty
-                    });
-                }
+        #endregion
 
-                return StatusCode(Convert.ToInt32(error[0]), new ApiResponse<string>
+        #region PRIVATE METHODS
+
+        private IActionResult CatchReturn(Exception ex)
+        {
+            string[] error = ex.Message.Split(';');
+
+            if (error.Length == 1)
+            {
+                return BadRequest(new ApiResponse<string>
                 {
-                    StatusCode = Convert.ToInt32(error[0]),
-                    Message = error[1],
+                    StatusCode = 400,
+                    Message = ex.Message,
                     Data = String.Empty
                 });
             }
+
+            return StatusCode(Convert.ToInt32(error[0]), new ApiResponse<string>
+            {
+                StatusCode = Convert.ToInt32(error[0]),
+                Message = error[1],
+                Data = String.Empty
+            });
         }
 
         #endregion
