@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
@@ -79,11 +80,14 @@ namespace TaskTaskerAPI.Controllers
         }
 
         [HttpPatch]
-        [Route("update")]
-        public async Task<IActionResult> Update([FromBody] AchievementDTO achievementDTO)
+        [Route("update/{id:int}")]
+        public async Task<IActionResult> Update([FromBody] AchievementDTO achievementDTO, [FromRoute] int id)
         {
             try
             {
+                if (id != achievementDTO.id)
+                    throw new Exception("400;ID does not match");
+
                 await this.achievementRepository.UpdateAchievement(achievementDTO);
 
                 await this.achievementRepository.SaveChanges();

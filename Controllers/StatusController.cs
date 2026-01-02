@@ -79,11 +79,14 @@ namespace TaskTaskerAPI.Controllers
         }
 
         [HttpPatch]
-        [Route("update")]
-        public async Task<IActionResult> Update([FromBody] StatusDTO statusDTO)
+        [Route("update/{id:int}")]
+        public async Task<IActionResult> Update([FromBody] StatusDTO statusDTO, [FromRoute] int id)
         {
             try
             {
+                if (id != statusDTO.id)
+                    throw new Exception("400;ID does not match");
+
                 await this.statusRepository.UpdateStatus(statusDTO);
 
                 await this.statusRepository.SaveChanges();
