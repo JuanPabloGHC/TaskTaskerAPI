@@ -168,6 +168,9 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (assignment == null)
                 throw new Exception("404;Assignment not found");
 
+            if (assignment.status.name == "Done")
+                throw new Exception("409;Cannot delete a done assignment");
+
             this._context.Remove(assignment);
         }
 
