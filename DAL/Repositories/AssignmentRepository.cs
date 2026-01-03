@@ -51,9 +51,9 @@ namespace TaskTaskerAPI.DAL.Repositories
         public async Task<IEnumerable<Assignment>> GetUndoneMemberAssignments(int memberID)
         {
             return await this._context.Assignments
-                .Where(a => a.member_id == memberID && a.status.name != "Done")
                 .Include(a => a.task)
                 .Include(a => a.status)
+                .Where(a => a.member_id == memberID && a.status.name != "Done")
                 .ToListAsync();
         }
 
@@ -94,13 +94,13 @@ namespace TaskTaskerAPI.DAL.Repositories
             await this._context.Assignments.AddAsync(assignment);
         }
 
-        public async Task UpdateAssignment(AssignmentDTO assignmentDTO, int memberId)
+        public async Task UpdateAssignment(AssignmentDTO assignmentDTO, int adminId)
         {
             MemberRepository memberRepository = new MemberRepository(this._context);
 
-            Member? member = await memberRepository.GetMemberByID(memberId);
+            Member? member = await memberRepository.GetMemberByID(adminId);
 
-            if (member == null || (member.role.name != "Admin" && member.role.name != "Owner" && member.id != assignmentDTO.member.id))
+            if (member == null || (member.role.name != "Admin" && member.role.name != "Owner"))
                 throw new Exception("403;You do not have permission");
 
             Assignment? assignment = await this.GetAssignmentByID(assignmentDTO.id);
@@ -126,6 +126,30 @@ namespace TaskTaskerAPI.DAL.Repositories
             assignment.status_id = assignmentDTO.status.id;
 
             assignment.date = assignmentDTO.date;
+
+            this._context.Entry(assignment).State = EntityState.Modified;
+        }
+
+        public async Task ChangeStatusAssignment(AssignmentDTO assignmentDTO, int memberId)
+        {
+            MemberRepository memberRepository = new MemberRepository(this._context);
+
+            Member? member = await memberRepository.GetMemberByID(memberId);
+
+            Assignment? assignment = await this.GetAssignmentByID(assignmentDTO.id);
+
+            if (assignment == null)
+                throw new Exception("404;Assignment not found");
+
+            if (member == null || assignment.member_id != memberId)
+                throw new Exception("403;You do not have permission");
+
+            StatusRepository statusRepository = new StatusRepository(this._context);
+
+            if (await statusRepository.GetStatusByID(assignmentDTO.status.id) == null)
+                throw new Exception("404;Status not found");
+
+            assignment.status_id = assignmentDTO.status.id;
 
             this._context.Entry(assignment).State = EntityState.Modified;
         }

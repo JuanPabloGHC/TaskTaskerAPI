@@ -84,6 +84,32 @@ namespace TaskTaskerAPI.Controllers
         }
 
         [HttpPatch]
+        [Route("update/{assignmentId:int}/{adminId:int}")]
+        public async Task<IActionResult> Update([FromRoute] int assignmentId, [FromRoute] int adminId, [FromBody] AssignmentDTO assignmentDTO)
+        {
+            try
+            {
+                if (assignmentId != assignmentDTO.id)
+                    throw new Exception("400;ID does not match");
+
+                await this.assignmentRepository.UpdateAssignment(assignmentDTO, adminId);
+
+                await this.assignmentRepository.SaveChanges();
+
+                return Ok(new ApiResponse<string>
+                {
+                    StatusCode = 200,
+                    Message = "Assignment updated successfully.",
+                    Data = string.Empty
+                });
+            }
+            catch (Exception ex)
+            {
+                return this.CatchReturn(ex);
+            }
+        }
+
+        [HttpPatch]
         [Route("change-status/{assignmentId:int}/{memberId:int}")]
         public async Task<IActionResult> ChangeStatus([FromRoute] int assignmentId, [FromRoute] int memberId, [FromBody] AssignmentDTO assignmentDTO)
         {
@@ -92,14 +118,14 @@ namespace TaskTaskerAPI.Controllers
                 if (assignmentId != assignmentDTO.id)
                     throw new Exception("400;ID does not match");
 
-                await this.assignmentRepository.UpdateAssignment(assignmentDTO, memberId);
+                await this.assignmentRepository.ChangeStatusAssignment(assignmentDTO, memberId);
 
                 await this.assignmentRepository.SaveChanges();
 
                 return Ok(new ApiResponse<string>
                 {
                     StatusCode = 200,
-                    Message = "Assignment status updated successfully.",
+                    Message = "Assignment status changed successfully.",
                     Data = string.Empty
                 });
             }
