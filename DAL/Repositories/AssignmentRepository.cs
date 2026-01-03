@@ -44,6 +44,16 @@ namespace TaskTaskerAPI.DAL.Repositories
             return await this._context.Assignments
                 .Where(a => a.member_id == memberID)
                 .Include(a => a.task)
+                .Include(a => a.status)
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Assignment>> GetUndoneMemberAssignments(int memberID)
+        {
+            return await this._context.Assignments
+                .Where(a => a.member_id == memberID && a.status.name != "Done")
+                .Include(a => a.task)
+                .Include(a => a.status)
                 .ToListAsync();
         }
 
@@ -54,12 +64,17 @@ namespace TaskTaskerAPI.DAL.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task CreateAssignment(AssignmentDTO assignmentDTO)
+        public async Task CreateAssignment(AssignmentDTO assignmentDTO, int adminId)
         {
+            MemberRepository memberRepository = new MemberRepository(this._context);
+
+            Member? member = await memberRepository.GetMemberByID(adminId);
+
+            if (member == null || (member.role.name != "Admin" && member.role.name != "Owner"))
+                throw new Exception("403;You do not have permission");
+
             if (this.Exists(assignmentDTO.member.id, assignmentDTO.task.id, assignmentDTO.date))
                 throw new Exception("409;Assignment already exists");
-
-            MemberRepository memberRepository = new MemberRepository(this._context);
 
             TaskRepository taskRepository = new TaskRepository(this._context);
 
@@ -79,8 +94,15 @@ namespace TaskTaskerAPI.DAL.Repositories
             await this._context.Assignments.AddAsync(assignment);
         }
 
-        public async Task UpdateAssignment(AssignmentDTO assignmentDTO)
+        public async Task UpdateAssignment(AssignmentDTO assignmentDTO, int memberId)
         {
+            MemberRepository memberRepository = new MemberRepository(this._context);
+
+            Member? member = await memberRepository.GetMemberByID(memberId);
+
+            if (member == null || (member.role.name != "Admin" && member.role.name != "Owner" && member.id != assignmentDTO.member.id))
+                throw new Exception("403;You do not have permission");
+
             Assignment? assignment = await this.GetAssignmentByID(assignmentDTO.id);
 
             if (assignment == null)
@@ -108,14 +130,26 @@ namespace TaskTaskerAPI.DAL.Repositories
             this._context.Entry(assignment).State = EntityState.Modified;
         }
 
-        public async Task DeleteAssignment(int id)
+        public async Task DeleteAssignment(int id, int adminId)
         {
+            MemberRepository memberRepository = new MemberRepository(this._context);
+
+            Member? member = await memberRepository.GetMemberByID(id);
+
+            if (member == null || (member.role.name != "Admin" && member.role.name != "Owner"))
+                throw new Exception("403;You do not have permission");
+
             Assignment? assignment = await this.GetAssignmentByID(id);
 
             if (assignment == null)
                 throw new Exception("404;Assignment not found");
 
             this._context.Remove(assignment);
+        }
+
+        public async Task SaveChanges()
+        {
+            await this._context.SaveChangesAsync();
         }
 
         protected virtual void Dispose(bool disposing)
