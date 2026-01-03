@@ -10,9 +10,11 @@ namespace TaskTaskerAPI.DAL.DTOs
 
         public string name { get; set; }
 
-        public string description { get; set; }
+        public int days { get; set; }
 
         public string image { get; set; }
+
+        public TaskDTO task { get; set; }
 
         #endregion
 
@@ -20,20 +22,22 @@ namespace TaskTaskerAPI.DAL.DTOs
 
         public AchievementDTO() { }
 
-        public AchievementDTO(int id, string name, string description, string image)
+        public AchievementDTO(int id, string name, int days, string image, TaskDTO task)
         {
             this.id = id;
             this.name = name;
-            this.description = description;
+            this.days = days;
             this.image = image;
+            this.task = task;
         }
 
         public AchievementDTO(Achievement achievement)
         {
             this.id = achievement.id;
             this.name = achievement.name;
-            this.description = achievement.description;
+            this.days = achievement.days;
             this.image = achievement.image;
+            this.task = new TaskDTO(achievement.task);
         }
 
         #endregion

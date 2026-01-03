@@ -17,11 +17,19 @@ namespace TaskTaskerAPI.DAL.Entities
         public string name { get; set; }
 
         [Required]
-        public string description { get; set; }
+        public int days { get; set; }
 
         [Required]
         public string image { get; set; }
 
+        #endregion
+
+        #region NAVIGATION
+
+        [Required]
+        public int task_id { get; set; }
+        [ForeignKey("task_id")]
+        public Task task { get; set; }
 
         #endregion
 
@@ -33,8 +41,9 @@ namespace TaskTaskerAPI.DAL.Entities
         {
             this.id = achievementDTO.id;
             this.name = achievementDTO.name;
-            this.description = achievementDTO.description;
+            this.days = achievementDTO.days;
             this.image = achievementDTO.image;
+            this.task_id = achievementDTO.task.id;
         }
 
         #endregion

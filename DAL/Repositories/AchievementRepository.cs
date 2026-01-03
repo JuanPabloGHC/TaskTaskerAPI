@@ -61,11 +61,18 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (this.Exists(achievementDTO.name, achievementDTO.id))
                 throw new Exception("409;Name already in use");
 
+            TaskRepository taskRepository = new TaskRepository(this._context);
+
+            if (await taskRepository.GetTaskByID(achievementDTO.task.id) == null)
+                throw new Exception("404;Task not found");
+
             achievement.name = achievementDTO.name;
 
-            achievement.description = achievementDTO.description;
+            achievement.days = achievementDTO.days;
 
             achievement.image = achievementDTO.image;
+
+            achievement.task_id = achievementDTO.task.id;
 
             this._context.Entry(achievement).State = EntityState.Modified;
         }
