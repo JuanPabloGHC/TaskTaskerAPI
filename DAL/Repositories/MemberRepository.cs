@@ -28,6 +28,16 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         #region PUBLIC METHODS
 
+        public async Task<bool> IsMemberHome(int memberId, int homeId)
+        {
+            if(await this._context.Members
+                .Where(m => m.id == memberId && m.home_id == homeId)
+                .FirstOrDefaultAsync() == null)
+                return false;
+
+            return true;
+        }
+
         public async Task<IEnumerable<Member>> GetMemberHomes(int personID)
         {
             return await this._context.Members

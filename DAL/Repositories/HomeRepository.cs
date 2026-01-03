@@ -35,7 +35,7 @@ namespace TaskTaskerAPI.DAL.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Home> CreateHome(HomeDTO homeDTO)
+        public async Task<Home> CreateHome(HomeDTO homeDTO, PersonDTO personDTO)
         {
             if (this.Exists(homeDTO.name))
                 throw new Exception("409;Name already in use");
@@ -43,6 +43,23 @@ namespace TaskTaskerAPI.DAL.Repositories
             Home home = new Home(homeDTO);
 
             await this._context.AddAsync(home);
+
+            RoleRepository roleRepository = new RoleRepository(this._context);
+
+            Role? ownerRole = await roleRepository.GetRoleByID(1);
+
+            RoleDTO roleDTO = new RoleDTO(ownerRole!);
+
+            MemberDTO memberDTO = new MemberDTO
+            {
+                person = personDTO,
+                home = homeDTO,
+                role = roleDTO
+            };
+
+            Member member = new Member(memberDTO);
+
+            await this._context.AddAsync(member);
 
             return home;
         }

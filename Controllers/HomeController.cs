@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Runtime.InteropServices.JavaScript;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
+using TaskTaskerAPI.DAL.Repositories;
 using TaskTaskerAPI.Utilities;
 
 namespace TaskTaskerAPI.Controllers
@@ -10,6 +12,22 @@ namespace TaskTaskerAPI.Controllers
     [Route("api/home")]
     public class HomeController : Controller
     {
+        #region CLASSES
+
+        public class NewHome
+        {
+            public HomeDTO homeDTO { get; set; }
+            public PersonDTO personDTO { get; set; }
+
+            public NewHomeBody()
+            {
+                this.homeDTO = new HomeDTO();
+                this.personDTO = new PersonDTO();
+            }
+        }
+
+        #endregion
+
         #region DATA MEMBERS
 
         private IHomeRepository homeRepository;
@@ -29,21 +47,21 @@ namespace TaskTaskerAPI.Controllers
 
         [HttpPost]
         [Route("create")]
-        public async Task<IActionResult> Create([FromBody] HomeDTO homeDTO)
+        public async Task<IActionResult> Create([FromBody] NewHome newHome)
         {
             try
             {
-                Home home = await this.homeRepository.CreateHome(homeDTO);
+                Home home = await this.homeRepository.CreateHome(newHome.homeDTO, newHome.personDTO);
 
                 await this.homeRepository.SaveChanges();
 
-                homeDTO = new HomeDTO(home);
+                newHome.homeDTO = new HomeDTO(home);
 
                 return Created("", new ApiResponse<HomeDTO>
                 {
                     StatusCode = 201,
                     Message = "Home created successfully",
-                    Data = homeDTO
+                    Data = newHome.homeDTO
                 });
             }
             catch (Exception ex)
