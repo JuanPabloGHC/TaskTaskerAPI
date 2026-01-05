@@ -6,7 +6,6 @@ namespace TaskTaskerAPI.DAL.Interfaces
 {
     public interface IMemberRepository : IDisposable
     {
-        Task<bool> IsMemberOfHome(int memberID, int homeID);
         Task<IEnumerable<Member>> GetMemberHomes(int personID);
         Task<IEnumerable<Member>> GetHomeMembers(int homeID);
         Task<Member?> GetMemberByID(int id);

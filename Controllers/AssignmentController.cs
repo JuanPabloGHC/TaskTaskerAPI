@@ -122,6 +122,32 @@ namespace TaskTaskerAPI.Controllers
 
                 await this.assignmentRepository.SaveChanges();
 
+                if (assignmentDTO.status.name == "Done")
+                {
+                    IAttainmentRepository attainmentRepository;
+                    attainmentRepository = (IAttainmentRepository)HttpContext.RequestServices.GetService(typeof(IAttainmentRepository))!;
+
+                    if (attainmentRepository == null)
+                        throw new Exception("500;Internal server error");
+
+                    List<Achievement> newAchievements = await attainmentRepository.ValidateAchievement(memberId, assignmentDTO.task.id);
+
+                    if (newAchievements.Count == 0)
+                    {
+                        foreach (Achievement achievement in newAchievements)
+                            await attainmentRepository.CreateAttainment(memberId, achievement.id);
+
+                        await attainmentRepository.SaveChanges();
+                    }
+
+                    return Ok(new ApiResponse<List<AchievementDTO>>
+                    {
+                        StatusCode = 200,
+                        Message = "Assignment status changed successfully.",
+                        Data = newAchievements.ConvertAll(a => new AchievementDTO(a))
+                    });
+                }
+
                 return Ok(new ApiResponse<string>
                 {
                     StatusCode = 200,

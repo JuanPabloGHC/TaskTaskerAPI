@@ -56,6 +56,18 @@ namespace TaskTaskerAPI.DAL.Repositories
             await this._context.AddAsync(attainment);
         }
 
+        public async Task<List<Achievement>> ValidateAchievement(int memberID, int taskID)
+        {
+            AchievementRepository achievementRepository = new AchievementRepository(this._context);
+
+            return await this.GetTaskAchievements(memberID, taskID);
+        }
+
+        public async Task SaveChanges()
+        {
+            await this._context.SaveChangesAsync();
+        }
+
         protected virtual void Dispose(bool disposing)
         {
             if (!this.disposed)
@@ -85,6 +97,22 @@ namespace TaskTaskerAPI.DAL.Repositories
             return this._context.Attainments
                 .Where(a => a.member_id == memberID && a.achievement_id == achievementID)
                 .Any();
+        }
+
+        private async Task<List<Achievement>> GetTaskAchievements(int memberId, int taskId)
+        {
+            int completedDays = await this._context.Assignments
+                .Include(a => a.status)
+                .Where(a => a.member_id == memberId && a.task_id == taskId && a.status.name == "Done")
+                .CountAsync();
+
+            return await this._context.Achievements
+                .Include(a => a.task)
+                .Where(a => a.task_id == taskId
+                    && a.days <= completedDays
+                    && !this._context.Attainments
+                        .Any(at => at.member_id == memberId && at.achievement_id == a.id))
+                .ToListAsync();
         }
 
         #endregion

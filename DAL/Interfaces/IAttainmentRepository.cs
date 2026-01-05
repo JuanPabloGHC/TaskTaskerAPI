@@ -7,5 +7,7 @@ namespace TaskTaskerAPI.DAL.Interfaces
     {
         Task<IEnumerable<Attainment>> GetMemberAttainmentes(int memberID);
         Task CreateAttainment(int memberID, int achievementID);
+        Task<List<Achievement>> ValidateAchievement(int memberID, int taskID);
+        Task SaveChanges();
     }
 }

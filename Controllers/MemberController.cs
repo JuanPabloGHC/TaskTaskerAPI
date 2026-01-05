@@ -29,28 +29,72 @@ namespace TaskTaskerAPI.Controllers
         #region ENDPOINTS
 
         [HttpGet]
-        [Route("get-all/{homeId:int}/{memberId:int}")]
-        public async Task<IActionResult> GetAll([FromRoute] int homeId, [FromRoute] int memberId)
+        [Route("get-all/{homeId:int}/{requesterId:int}")]
+        public async Task<IActionResult> GetAll([FromRoute] int homeId, [FromRoute] int requesterId)
         {
             try
             {
-                if (!await this.memberRepository.IsMemberOfHome(memberId, homeId))
+                Member? requesterMember = await this.memberRepository.GetMemberByID(requesterId);
+
+                if (requesterMember == null || requesterMember.home.id != homeId)
                     throw new Exception("403;You do not have permission to view the members of this home");
 
                 List<Member> members = (List<Member>)await this.memberRepository.GetHomeMembers(homeId);
-
-                List<MemberDTO> memberDTOs = new List<MemberDTO>();
-
-                foreach (Member member in members)
-                {
-                    memberDTOs.Add(new MemberDTO(member, [], []));
-                }
 
                 return Ok(new ApiResponse<List<MemberDTO>>
                 {
                     StatusCode = 200,
                     Message = "",
-                    Data = memberDTOs
+                    Data = members.ConvertAll(a => new MemberDTO(a, [], []))
+                });
+            }
+            catch (Exception ex)
+            {
+                return this.CatchReturn(ex);
+            }
+        }
+
+        [HttpGet]
+        [Route("get/{memberId:int}/{requesterId:int}")]
+        public async Task<IActionResult> GetByID([FromRoute] int memberId, [FromRoute] int requesterId)
+        {
+            try
+            {
+                Member? member = await this.memberRepository.GetMemberByID(memberId);
+
+                if (member == null)
+                    throw new Exception("404;Member not found");
+
+                if (memberId != requesterId)
+                {
+                    Member? requesterMember = await this.memberRepository.GetMemberByID(requesterId);
+
+                    if (requesterMember == null || requesterMember.home.id != member.home.id)
+                        throw new Exception("403;You do not have permission to view the members of this home");
+                }
+
+                IAttainmentRepository attainmentRepository;
+                attainmentRepository = (IAttainmentRepository)HttpContext.RequestServices.GetService(typeof(IAttainmentRepository))!;
+
+                IAssignmentRepository assignmentRepository;
+                assignmentRepository = (IAssignmentRepository)HttpContext.RequestServices.GetService(typeof(IAssignmentRepository))!;
+
+                if (attainmentRepository == null || assignmentRepository == null)
+                    throw new Exception("500;Internal server error");
+
+                List<Attainment> attainments = (List<Attainment>)await attainmentRepository.GetMemberAttainmentes(memberId);
+                List<Assignment> assignments = (List<Assignment>)await assignmentRepository.GetMemberAssignments(memberId);
+
+                MemberDTO memberDTO = new MemberDTO(member,
+                    attainments.ConvertAll(a => new AchievementDTO(a.achievement)),
+                    assignments.ConvertAll(a => new AssignmentDTO(a))
+                );
+
+                return Ok(new ApiResponse<MemberDTO>
+                {
+                    StatusCode = 200,
+                    Message = "",
+                    Data = memberDTO
                 });
             }
             catch (Exception ex)
