@@ -99,6 +99,9 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (achievement == null)
                 throw new Exception("404;Achievement not found");
 
+            if (await this._context.Attainments.AnyAsync(at => at.achievement_id == id))
+                throw new Exception("409;Achievement is in use and cannot be deleted");
+
             this._context.Remove(achievement);
         }
 

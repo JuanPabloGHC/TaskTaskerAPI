@@ -5,6 +5,7 @@ namespace TaskTaskerAPI.DAL.Interfaces
 {
     public interface IAdminUserRepository : IDisposable
     {
+        Task<IEnumerable<AdminUser>> GetAll();
         Task<AdminUser?> GetByUsername(string username);
         Task<bool> AnyAdmins();
         Task<AdminUser> CreateAdmin(string username, string password);

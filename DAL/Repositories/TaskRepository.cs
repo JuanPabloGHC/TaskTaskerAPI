@@ -81,6 +81,10 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (task == null)
                 throw new Exception("404;Task not found");
 
+            if (await this._context.Assignments.AnyAsync(a => a.task_id == id)
+                || await this._context.Achievements.AnyAsync(a => a.task_id == id))
+                throw new Exception("409;Task is in use and cannot be deleted");
+
             this._context.Remove(task);
         }
         public async Task SaveChanges()

@@ -30,6 +30,13 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         #region PUBLIC METHODS
 
+        public async Task<IEnumerable<AdminUser>> GetAll()
+        {
+            return await this._context.AdminUsers
+                .OrderBy(a => a.username)
+                .ToListAsync();
+        }
+
         public async Task<AdminUser?> GetByUsername(string username)
         {
             return await this._context.AdminUsers

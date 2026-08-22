@@ -97,6 +97,21 @@ namespace TaskTaskerAPI.Controllers
         }
 
         [Authorize(Roles = "platform_admin")]
+        [HttpGet]
+        [Route("get-all")]
+        public async Task<IActionResult> GetAll()
+        {
+            List<AdminUser> admins = (List<AdminUser>)await this.adminUserRepository.GetAll();
+
+            return Ok(new ApiResponse<List<AdminDTO>>
+            {
+                StatusCode = 200,
+                Message = "",
+                Data = admins.ConvertAll(a => new AdminDTO(a))
+            });
+        }
+
+        [Authorize(Roles = "platform_admin")]
         [HttpDelete]
         [Route("delete/{id:int}")]
         public async Task<IActionResult> Delete([FromRoute] int id)

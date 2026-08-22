@@ -89,6 +89,9 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (status == null)
                 throw new Exception("404;Status not found");
 
+            if (await this._context.Assignments.AnyAsync(a => a.status_id == id))
+                throw new Exception("409;Status is in use and cannot be deleted");
+
             this._context.Remove(status);
         }
 

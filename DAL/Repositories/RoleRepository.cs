@@ -82,6 +82,9 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (role == null)
                 throw new Exception("404;Role not found");
 
+            if (await this._context.Members.AnyAsync(m => m.role_id == id))
+                throw new Exception("409;Role is in use and cannot be deleted");
+
             this._context.Remove(role);
         }
 

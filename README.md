@@ -275,6 +275,7 @@ Acceso: 🔓 anónimo · 🔒 autenticado (cualquier token) · 👤 dueño del r
 |---|---|---|---|
 | POST | `/login` | 🔓 | Devuelve access token con `platform_admin` |
 | POST | `/create` | 🔓 primero, luego 🛡️ | Crea admin (bootstrap si no hay admins) |
+| GET | `/get-all` | 🛡️ | Lista admins (`{ id, username }`, sin password) |
 | DELETE | `/delete/{id}` | 🛡️ | Elimina un admin |
 
 ### Person — `/api/person` (App)
@@ -335,7 +336,12 @@ Los cuatro comparten la misma forma:
 | GET | `/get/{id}` | 🔒 | Obtener por id |
 | POST | `/create` | 🛡️ | Crear |
 | PATCH | `/update/{id}` | 🛡️ | Editar |
-| DELETE | `/delete/{id}` | 🛡️ | Eliminar |
+| DELETE | `/delete/{id}` | 🛡️ | Eliminar (**409 si está en uso**, ver abajo) |
+
+> **Borrado con referencias:** eliminar un elemento de catálogo que ya está en uso devuelve **`409`** y no borra nada (protege el historial):
+> - `Task` en uso por asignaciones o logros · `Status` en uso por asignaciones · `Role` en uso por miembros · `Achievement` ya obtenido por algún miembro.
+>
+> Mensaje: `"<Recurso> is in use and cannot be deleted"`. En la UI, muestra ese mensaje y bloquea el borrado.
 
 ---
 
