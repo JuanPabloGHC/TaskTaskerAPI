@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Runtime.InteropServices.JavaScript;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
@@ -19,7 +18,7 @@ namespace TaskTaskerAPI.Controllers
             public HomeDTO homeDTO { get; set; }
             public PersonDTO personDTO { get; set; }
 
-            public NewHomeBody()
+            public NewHome()
             {
                 this.homeDTO = new HomeDTO();
                 this.personDTO = new PersonDTO();

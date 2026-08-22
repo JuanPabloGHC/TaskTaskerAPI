@@ -3,7 +3,6 @@ using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
 using TaskTaskerAPI.Utilities;
-using static TaskTaskerAPI.Controllers.HomeController;
 
 namespace TaskTaskerAPI.Controllers
 {
