@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
 using System.Text;
 using TaskTaskerAPI.DAL.Context;
 using TaskTaskerAPI.DAL.Entities;
@@ -32,7 +34,37 @@ builder.Services.AddControllers(options =>
 });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "TaskTasker API",
+        Version = "v1",
+        Description = "API para gestionar tareas del hogar. Dos clientes: la plataforma web "
+            + "(admin de plataforma, gestiona el catálogo global) y la app móvil (personas que "
+            + "gestionan sus casas, miembros y asignaciones). Autentícate con el botón Authorize "
+            + "pegando el accessToken devuelto por /api/auth/login o /api/admin/login."
+    });
+
+    OpenApiSecurityScheme jwtScheme = new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Pega solo el token (Swagger antepone 'Bearer ' automáticamente).",
+        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+    };
+
+    options.AddSecurityDefinition("Bearer", jwtScheme);
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement { { jwtScheme, Array.Empty<string>() } });
+
+    string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+        options.IncludeXmlComments(xmlPath);
+});
 builder.Services.AddDbContext<TaskTaskerContext>(options =>
     options.UseNpgsql(Environment.GetEnvironmentVariable("DATABASE")));
 
