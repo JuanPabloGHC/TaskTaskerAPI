@@ -9,6 +9,7 @@ namespace TaskTaskerAPI.DAL.Interfaces
         Task<IEnumerable<Member>> GetMemberHomes(int personID);
         Task<IEnumerable<Member>> GetHomeMembers(int homeID);
         Task<Member?> GetMemberByID(int id);
+        Task<Member?> GetMemberByPersonAndHome(int personId, int homeId);
         Task CreateMember(MemberDTO memberDTO);
         Task UpdateMember(MemberDTO memberDTO);
         Task DeleteMember(int id);

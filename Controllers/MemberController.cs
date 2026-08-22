@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
@@ -8,7 +9,7 @@ namespace TaskTaskerAPI.Controllers
 {
     [ApiController]
     [Route("api/member")]
-    public class MemberController : Controller
+    public class MemberController : AppControllerBase
     {
         #region DATA MEMBERS
 
@@ -27,16 +28,16 @@ namespace TaskTaskerAPI.Controllers
 
         #region ENDPOINTS
 
+        [Authorize]
         [HttpGet]
-        [Route("get-all/{homeId:int}/{requesterId:int}")]
-        public async Task<IActionResult> GetAll([FromRoute] int homeId, [FromRoute] int requesterId)
+        [Route("get-all/{homeId:int}")]
+        public async Task<IActionResult> GetAll([FromRoute] int homeId)
         {
             try
             {
-                Member? requesterMember = await this.memberRepository.GetMemberByID(requesterId);
+                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), homeId);
 
-                if (requesterMember == null || requesterMember.home.id != homeId)
-                    throw new Exception("403;You do not have permission to view the members of this home");
+                RequireMembership(caller);
 
                 List<Member> members = (List<Member>)await this.memberRepository.GetHomeMembers(homeId);
 
@@ -53,9 +54,10 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet]
-        [Route("get/{memberId:int}/{requesterId:int}")]
-        public async Task<IActionResult> GetByID([FromRoute] int memberId, [FromRoute] int requesterId)
+        [Route("get/{memberId:int}")]
+        public async Task<IActionResult> GetByID([FromRoute] int memberId)
         {
             try
             {
@@ -64,12 +66,13 @@ namespace TaskTaskerAPI.Controllers
                 if (member == null)
                     throw new Exception("404;Member not found");
 
-                if (memberId != requesterId)
+                // The caller may view a member if it is themselves, or if they belong
+                // to the same home.
+                if (member.person_id != this.GetPersonId())
                 {
-                    Member? requesterMember = await this.memberRepository.GetMemberByID(requesterId);
+                    Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), member.home_id);
 
-                    if (requesterMember == null || requesterMember.home.id != member.home.id)
-                        throw new Exception("403;You do not have permission to view the members of this home");
+                    RequireMembership(caller);
                 }
 
                 IAttainmentRepository attainmentRepository;
@@ -102,12 +105,17 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpPost]
         [Route("create")]
         public async Task<IActionResult> Create([FromBody] MemberDTO memberDTO)
         {
             try
             {
+                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), memberDTO.home.id);
+
+                RequireRole(caller, "Owner", "Admin");
+
                 await this.memberRepository.CreateMember(memberDTO);
 
                 await this.memberRepository.SaveChanges();
@@ -125,6 +133,7 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpPatch]
         [Route("update/{memberId:int}")]
         public async Task<IActionResult> Update([FromBody] MemberDTO memberDTO, [FromRoute] int memberId)
@@ -133,6 +142,15 @@ namespace TaskTaskerAPI.Controllers
             {
                 if (memberId != memberDTO.id)
                     throw new Exception("400;ID does not match");
+
+                Member? target = await this.memberRepository.GetMemberByID(memberId);
+
+                if (target == null)
+                    throw new Exception("404;Member not found");
+
+                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), target.home_id);
+
+                RequireRole(caller, "Owner");
 
                 await this.memberRepository.UpdateMember(memberDTO);
 
@@ -151,12 +169,22 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpDelete]
         [Route("remove/{memberId:int}")]
         public async Task<IActionResult> Delete([FromRoute] int memberId)
         {
             try
             {
+                Member? target = await this.memberRepository.GetMemberByID(memberId);
+
+                if (target == null)
+                    throw new Exception("404;Member not found");
+
+                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), target.home_id);
+
+                RequireRole(caller, "Owner");
+
                 await this.memberRepository.DeleteMember(memberId);
 
                 await this.memberRepository.SaveChanges();
@@ -172,32 +200,6 @@ namespace TaskTaskerAPI.Controllers
             {
                 return this.CatchReturn(ex);
             }
-        }
-
-        #endregion
-
-        #region PRIVATE METHODS
-
-        private IActionResult CatchReturn(Exception ex)
-        {
-            string[] error = ex.Message.Split(';');
-
-            if (error.Length == 1)
-            {
-                return BadRequest(new ApiResponse<string>
-                {
-                    StatusCode = 400,
-                    Message = ex.Message,
-                    Data = String.Empty
-                });
-            }
-
-            return StatusCode(Convert.ToInt32(error[0]), new ApiResponse<string>
-            {
-                StatusCode = Convert.ToInt32(error[0]),
-                Message = error[1],
-                Data = String.Empty
-            });
         }
 
         #endregion

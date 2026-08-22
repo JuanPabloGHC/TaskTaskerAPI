@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
@@ -8,33 +9,49 @@ namespace TaskTaskerAPI.Controllers
 {
     [ApiController]
     [Route("api/assignment")]
-    public class AssignmentController : Controller
+    public class AssignmentController : AppControllerBase
     {
         #region DATA MEMBERS
 
         private IAssignmentRepository assignmentRepository;
+        private IMemberRepository memberRepository;
 
         #endregion
 
         #region CONSTRUCTOR
 
-        public AssignmentController(IAssignmentRepository assignmentRepository)
+        public AssignmentController(IAssignmentRepository assignmentRepository, IMemberRepository memberRepository)
         {
             this.assignmentRepository = assignmentRepository;
+            this.memberRepository = memberRepository;
         }
 
         #endregion
 
         #region ENDPOINTS
 
+        [Authorize]
         [HttpGet]
         [Route("get-all/member/{memberId:int}")]
         public async Task<IActionResult> GetAllFromMember([FromRoute] int memberId, [FromQuery] bool undone = false)
         {
             try
             {
+                Member? target = await this.memberRepository.GetMemberByID(memberId);
+
+                if (target == null)
+                    throw new Exception("404;Member not found");
+
+                // Members see their own assignments; Owners/Admins can see any member's.
+                if (target.person_id != this.GetPersonId())
+                {
+                    Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), target.home_id);
+
+                    RequireRole(caller, "Owner", "Admin");
+                }
+
                 List<Assignment> assignments = (List<Assignment>)(
-                    undone ? 
+                    undone ?
                         await this.assignmentRepository.GetUndoneMemberAssignments(memberId)
                     :
                         await this.assignmentRepository.GetMemberAssignments(memberId)
@@ -60,13 +77,23 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpPost]
-        [Route("create/{adminId:int}")]
-        public async Task<IActionResult> Create([FromBody] AssignmentDTO assignmentDTO, [FromRoute] int adminId)
+        [Route("create")]
+        public async Task<IActionResult> Create([FromBody] AssignmentDTO assignmentDTO)
         {
             try
             {
-                await this.assignmentRepository.CreateAssignment(assignmentDTO, adminId);
+                Member? targetMember = await this.memberRepository.GetMemberByID(assignmentDTO.member.id);
+
+                if (targetMember == null)
+                    throw new Exception("404;Member not found");
+
+                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), targetMember.home_id);
+
+                RequireRole(caller, "Owner", "Admin");
+
+                await this.assignmentRepository.CreateAssignment(assignmentDTO);
 
                 await this.assignmentRepository.SaveChanges();
 
@@ -83,16 +110,26 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpPatch]
-        [Route("update/{assignmentId:int}/{adminId:int}")]
-        public async Task<IActionResult> Update([FromRoute] int assignmentId, [FromRoute] int adminId, [FromBody] AssignmentDTO assignmentDTO)
+        [Route("update/{assignmentId:int}")]
+        public async Task<IActionResult> Update([FromRoute] int assignmentId, [FromBody] AssignmentDTO assignmentDTO)
         {
             try
             {
                 if (assignmentId != assignmentDTO.id)
                     throw new Exception("400;ID does not match");
 
-                await this.assignmentRepository.UpdateAssignment(assignmentDTO, adminId);
+                Assignment? assignment = await this.assignmentRepository.GetAssignmentByID(assignmentId);
+
+                if (assignment == null)
+                    throw new Exception("404;Assignment not found");
+
+                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), assignment.member.home_id);
+
+                RequireRole(caller, "Owner", "Admin");
+
+                await this.assignmentRepository.UpdateAssignment(assignmentDTO);
 
                 await this.assignmentRepository.SaveChanges();
 
@@ -109,16 +146,26 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpPatch]
-        [Route("change-status/{assignmentId:int}/{memberId:int}")]
-        public async Task<IActionResult> ChangeStatus([FromRoute] int assignmentId, [FromRoute] int memberId, [FromBody] AssignmentDTO assignmentDTO)
+        [Route("change-status/{assignmentId:int}")]
+        public async Task<IActionResult> ChangeStatus([FromRoute] int assignmentId, [FromBody] AssignmentDTO assignmentDTO)
         {
             try
             {
                 if (assignmentId != assignmentDTO.id)
                     throw new Exception("400;ID does not match");
 
-                await this.assignmentRepository.ChangeStatusAssignment(assignmentDTO, memberId);
+                Assignment? assignment = await this.assignmentRepository.GetAssignmentByID(assignmentId);
+
+                if (assignment == null)
+                    throw new Exception("404;Assignment not found");
+
+                // Only the assignee can change the status of their own assignment.
+                if (assignment.member.person_id != this.GetPersonId())
+                    throw new Exception("403;You do not have permission");
+
+                await this.assignmentRepository.ChangeStatusAssignment(assignmentDTO);
 
                 await this.assignmentRepository.SaveChanges();
 
@@ -130,12 +177,12 @@ namespace TaskTaskerAPI.Controllers
                     if (attainmentRepository == null)
                         throw new Exception("500;Internal server error");
 
-                    List<Achievement> newAchievements = await attainmentRepository.ValidateAchievement(memberId, assignmentDTO.task.id);
+                    List<Achievement> newAchievements = await attainmentRepository.ValidateAchievement(assignment.member_id, assignmentDTO.task.id);
 
-                    if (newAchievements.Count == 0)
+                    if (newAchievements.Count > 0)
                     {
                         foreach (Achievement achievement in newAchievements)
-                            await attainmentRepository.CreateAttainment(memberId, achievement.id);
+                            await attainmentRepository.CreateAttainment(assignment.member_id, achievement.id);
 
                         await attainmentRepository.SaveChanges();
                     }
@@ -161,13 +208,23 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpDelete]
-        [Route("delete/{assignmentId:int}/{adminId:int}")]
-        public async Task<IActionResult> Delete([FromRoute] int assignmentId, [FromRoute] int adminId)
+        [Route("delete/{assignmentId:int}")]
+        public async Task<IActionResult> Delete([FromRoute] int assignmentId)
         {
             try
             {
-                await this.assignmentRepository.DeleteAssignment(assignmentId, adminId);
+                Assignment? assignment = await this.assignmentRepository.GetAssignmentByID(assignmentId);
+
+                if (assignment == null)
+                    throw new Exception("404;Assignment not found");
+
+                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), assignment.member.home_id);
+
+                RequireRole(caller, "Owner", "Admin");
+
+                await this.assignmentRepository.DeleteAssignment(assignmentId);
 
                 await this.assignmentRepository.SaveChanges();
 
@@ -182,32 +239,6 @@ namespace TaskTaskerAPI.Controllers
             {
                 return this.CatchReturn(ex);
             }
-        }
-
-        #endregion
-
-        #region PRIVATE METHODS
-
-        private IActionResult CatchReturn(Exception ex)
-        {
-            string[] error = ex.Message.Split(';');
-
-            if (error.Length == 1)
-            {
-                return BadRequest(new ApiResponse<string>
-                {
-                    StatusCode = 400,
-                    Message = ex.Message,
-                    Data = String.Empty
-                });
-            }
-
-            return StatusCode(Convert.ToInt32(error[0]), new ApiResponse<string>
-            {
-                StatusCode = Convert.ToInt32(error[0]),
-                Message = error[1],
-                Data = String.Empty
-            });
         }
 
         #endregion

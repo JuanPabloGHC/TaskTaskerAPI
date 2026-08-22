@@ -35,29 +35,30 @@ namespace TaskTaskerAPI.DAL.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Home> CreateHome(HomeDTO homeDTO, PersonDTO personDTO)
+        public async Task<Home> CreateHome(HomeDTO homeDTO, int ownerPersonId)
         {
             if (this.Exists(homeDTO.name))
                 throw new Exception("409;Name already in use");
+
+            Role? ownerRole = await this._context.Roles
+                .Where(r => r.name == "Owner")
+                .FirstOrDefaultAsync();
+
+            if (ownerRole == null)
+                throw new Exception("500;Owner role is not configured");
 
             Home home = new Home(homeDTO);
 
             await this._context.AddAsync(home);
 
-            RoleRepository roleRepository = new RoleRepository(this._context);
-
-            Role? ownerRole = await roleRepository.GetRoleByID(1);
-
-            RoleDTO roleDTO = new RoleDTO(ownerRole!);
-
-            MemberDTO memberDTO = new MemberDTO
+            // The creator becomes the Owner. Linking the tracked home entity (rather
+            // than a plain id) lets EF fill in home_id once the home gets its identity.
+            Member member = new Member
             {
-                person = personDTO,
-                home = homeDTO,
-                role = roleDTO
+                person_id = ownerPersonId,
+                role_id = ownerRole.id,
+                home = home
             };
-
-            Member member = new Member(memberDTO);
 
             await this._context.AddAsync(member);
 

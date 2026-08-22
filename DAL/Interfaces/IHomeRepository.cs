@@ -7,7 +7,7 @@ namespace TaskTaskerAPI.DAL.Interfaces
     public interface IHomeRepository : IDisposable
     {
         Task<Home?> GetHomeByID(int id);
-        Task<Home> CreateHome(HomeDTO homeDTO, PersonDTO personDTO);
+        Task<Home> CreateHome(HomeDTO homeDTO, int ownerPersonId);
         Task<Home> UpdateHome(HomeDTO homeDTO);
         Task DeleteHome(int id);
         Task SaveChanges();

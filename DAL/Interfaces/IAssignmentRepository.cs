@@ -10,10 +10,10 @@ namespace TaskTaskerAPI.DAL.Interfaces
         Task<IEnumerable<Assignment>> GetMemberAssignments(int memberID);
         Task<IEnumerable<Assignment>> GetUndoneMemberAssignments(int memberID);
         Task<Assignment?> GetAssignmentByID(int id);
-        Task CreateAssignment(AssignmentDTO assignmentDTO, int adminId);
-        Task UpdateAssignment(AssignmentDTO assignmentDTO, int adminId);
-        Task ChangeStatusAssignment(AssignmentDTO assignmentDTO, int memberId);
-        Task DeleteAssignment(int id, int adminId);
+        Task CreateAssignment(AssignmentDTO assignmentDTO);
+        Task UpdateAssignment(AssignmentDTO assignmentDTO);
+        Task ChangeStatusAssignment(AssignmentDTO assignmentDTO);
+        Task DeleteAssignment(int id);
         Task SaveChanges();
     }
 }

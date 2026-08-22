@@ -57,6 +57,16 @@ namespace TaskTaskerAPI.DAL.Repositories
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<Member?> GetMemberByPersonAndHome(int personId, int homeId)
+        {
+            return await this._context.Members
+                .Where(m => m.person_id == personId && m.home_id == homeId)
+                .Include(m => m.person)
+                .Include(m => m.home)
+                .Include(m => m.role)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task CreateMember(MemberDTO memberDTO)
         {
             if (this.Exists(memberDTO.person.id, memberDTO.home.id))

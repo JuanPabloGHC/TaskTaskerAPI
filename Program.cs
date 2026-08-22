@@ -23,7 +23,12 @@ var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY")
 builder.Configuration["Jwt:Key"] = jwtKey;
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    // DTOs are used with partial payloads (e.g. referencing entities by { id }),
+    // so don't treat non-nullable reference properties as implicitly [Required].
+    options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

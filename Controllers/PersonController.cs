@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
@@ -8,7 +9,7 @@ namespace TaskTaskerAPI.Controllers
 {
     [ApiController]
     [Route("api/person")]
-    public class PersonController : Controller
+    public class PersonController : AppControllerBase
     {
         #region DATA MEMBERS
 
@@ -52,12 +53,41 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet]
+        [Route("me")]
+        public async Task<IActionResult> Me()
+        {
+            try
+            {
+                Person? person = await this.personRepository.GetPersonByID(this.GetPersonId());
+
+                if (person == null)
+                    throw new Exception("404;User not found");
+
+                return Ok(new ApiResponse<PersonDTO>
+                {
+                    StatusCode = 200,
+                    Message = "",
+                    Data = new PersonDTO(person)
+                });
+            }
+            catch (Exception ex)
+            {
+                return this.CatchReturn(ex);
+            }
+        }
+
+        [Authorize]
         [HttpPatch]
         [Route("update/{id:int}")]
         public async Task<IActionResult> Update([FromBody] PersonDTO personDTO, [FromRoute] int id)
         {
             try
             {
+                if (id != this.GetPersonId())
+                    throw new Exception("403;You can only update your own account");
+
                 if (id != personDTO.id)
                     throw new Exception("400;ID does not match");
 
@@ -80,12 +110,16 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpDelete]
         [Route("delete/{id:int}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             try
             {
+                if (id != this.GetPersonId())
+                    throw new Exception("403;You can only delete your own account");
+
                 await this.personRepository.DeletePerson(id);
 
                 await this.personRepository.SaveChanges();
@@ -101,32 +135,6 @@ namespace TaskTaskerAPI.Controllers
             {
                 return this.CatchReturn(ex);
             }
-        }
-
-        #endregion
-
-        #region PRIVATE METHODS
-
-        private IActionResult CatchReturn(Exception ex)
-        {
-            string[] error = ex.Message.Split(';');
-
-            if (error.Length == 1)
-            {
-                return BadRequest(new ApiResponse<string>
-                {
-                    StatusCode = 400,
-                    Message = ex.Message,
-                    Data = String.Empty
-                });
-            }
-
-            return StatusCode(Convert.ToInt32(error[0]), new ApiResponse<string>
-            {
-                StatusCode = Convert.ToInt32(error[0]),
-                Message = error[1],
-                Data = String.Empty
-            });
         }
 
         #endregion
