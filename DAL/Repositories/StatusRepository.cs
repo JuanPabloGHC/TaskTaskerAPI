@@ -41,6 +41,13 @@ namespace TaskTaskerAPI.DAL.Repositories
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<Status?> GetStatusByName(string name)
+        {
+            return await this._context.Statuses
+                .Where(s => s.name == name)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task CreateStatus(StatusDTO statusDTO)
         {
             if (this.Exists(statusDTO.name))

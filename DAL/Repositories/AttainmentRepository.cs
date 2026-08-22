@@ -36,6 +36,15 @@ namespace TaskTaskerAPI.DAL.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<Attainment>> GetHomeAttainmentes(int homeID)
+        {
+            return await this._context.Attainments
+                .Where(a => a.member.home_id == homeID)
+                .Include(a => a.member).ThenInclude(m => m.person)
+                .Include(a => a.achievement).ThenInclude(ach => ach.task)
+                .ToListAsync();
+        }
+
         public async Task CreateAttainment(int memberID, int achievementID)
         {
             if (this.Exists(memberID, achievementID))

@@ -31,6 +31,57 @@ namespace TaskTaskerAPI.Controllers
         #region ENDPOINTS
 
         [Authorize]
+        [HttpGet]
+        [Route("mine")]
+        public async Task<IActionResult> GetMine()
+        {
+            try
+            {
+                List<Member> memberships = (List<Member>)await this.memberRepository.GetMemberHomes(this.GetPersonId());
+
+                return Ok(new ApiResponse<List<MemberDTO>>
+                {
+                    StatusCode = 200,
+                    Message = "",
+                    Data = memberships.ConvertAll(m => new MemberDTO(m, [], []))
+                });
+            }
+            catch (Exception ex)
+            {
+                return this.CatchReturn(ex);
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
+        [Route("get/{id:int}")]
+        public async Task<IActionResult> GetByID([FromRoute] int id)
+        {
+            try
+            {
+                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), id);
+
+                RequireMembership(caller);
+
+                Home? home = await this.homeRepository.GetHomeByID(id);
+
+                if (home == null)
+                    throw new Exception("404;Home not found");
+
+                return Ok(new ApiResponse<HomeDTO>
+                {
+                    StatusCode = 200,
+                    Message = "",
+                    Data = new HomeDTO(home)
+                });
+            }
+            catch (Exception ex)
+            {
+                return this.CatchReturn(ex);
+            }
+        }
+
+        [Authorize]
         [HttpPost]
         [Route("create")]
         public async Task<IActionResult> Create([FromBody] HomeDTO homeDTO)

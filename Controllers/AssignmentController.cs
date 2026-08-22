@@ -15,15 +15,23 @@ namespace TaskTaskerAPI.Controllers
 
         private IAssignmentRepository assignmentRepository;
         private IMemberRepository memberRepository;
+        private IStatusRepository statusRepository;
+        private IAttainmentRepository attainmentRepository;
 
         #endregion
 
         #region CONSTRUCTOR
 
-        public AssignmentController(IAssignmentRepository assignmentRepository, IMemberRepository memberRepository)
+        public AssignmentController(
+            IAssignmentRepository assignmentRepository,
+            IMemberRepository memberRepository,
+            IStatusRepository statusRepository,
+            IAttainmentRepository attainmentRepository)
         {
             this.assignmentRepository = assignmentRepository;
             this.memberRepository = memberRepository;
+            this.statusRepository = statusRepository;
+            this.attainmentRepository = attainmentRepository;
         }
 
         #endregion
@@ -147,6 +155,32 @@ namespace TaskTaskerAPI.Controllers
         }
 
         [Authorize]
+        [HttpGet]
+        [Route("get-all/home/{homeId:int}")]
+        public async Task<IActionResult> GetAllFromHome([FromRoute] int homeId)
+        {
+            try
+            {
+                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), homeId);
+
+                RequireMembership(caller);
+
+                List<Assignment> assignments = (List<Assignment>)await this.assignmentRepository.GetHomeAssignments(homeId);
+
+                return Ok(new ApiResponse<List<AssignmentDTO>>
+                {
+                    StatusCode = 200,
+                    Message = "",
+                    Data = assignments.ConvertAll(a => new AssignmentDTO(a))
+                });
+            }
+            catch (Exception ex)
+            {
+                return this.CatchReturn(ex);
+            }
+        }
+
+        [Authorize]
         [HttpPatch]
         [Route("change-status/{assignmentId:int}")]
         public async Task<IActionResult> ChangeStatus([FromRoute] int assignmentId, [FromBody] AssignmentDTO assignmentDTO)
@@ -165,41 +199,71 @@ namespace TaskTaskerAPI.Controllers
                 if (assignment.member.person_id != this.GetPersonId())
                     throw new Exception("403;You do not have permission");
 
+                // "Done" is granted only by an Owner/Admin via the approval flow, so the
+                // assignee cannot mark it done directly (they submit it for review instead).
+                Status? requested = await this.statusRepository.GetStatusByID(assignmentDTO.status.id);
+
+                if (requested != null && requested.name == "Done")
+                    throw new Exception("403;Only an Owner or Admin can approve a task as Done");
+
                 await this.assignmentRepository.ChangeStatusAssignment(assignmentDTO);
 
                 await this.assignmentRepository.SaveChanges();
-
-                if (assignmentDTO.status.name == "Done")
-                {
-                    IAttainmentRepository attainmentRepository;
-                    attainmentRepository = (IAttainmentRepository)HttpContext.RequestServices.GetService(typeof(IAttainmentRepository))!;
-
-                    if (attainmentRepository == null)
-                        throw new Exception("500;Internal server error");
-
-                    List<Achievement> newAchievements = await attainmentRepository.ValidateAchievement(assignment.member_id, assignmentDTO.task.id);
-
-                    if (newAchievements.Count > 0)
-                    {
-                        foreach (Achievement achievement in newAchievements)
-                            await attainmentRepository.CreateAttainment(assignment.member_id, achievement.id);
-
-                        await attainmentRepository.SaveChanges();
-                    }
-
-                    return Ok(new ApiResponse<List<AchievementDTO>>
-                    {
-                        StatusCode = 200,
-                        Message = "Assignment status changed successfully.",
-                        Data = newAchievements.ConvertAll(a => new AchievementDTO(a))
-                    });
-                }
 
                 return Ok(new ApiResponse<string>
                 {
                     StatusCode = 200,
                     Message = "Assignment status changed successfully.",
                     Data = string.Empty
+                });
+            }
+            catch (Exception ex)
+            {
+                return this.CatchReturn(ex);
+            }
+        }
+
+        [Authorize]
+        [HttpPatch]
+        [Route("approve/{assignmentId:int}")]
+        public async Task<IActionResult> Approve([FromRoute] int assignmentId)
+        {
+            try
+            {
+                Assignment? assignment = await this.assignmentRepository.GetAssignmentByID(assignmentId);
+
+                if (assignment == null)
+                    throw new Exception("404;Assignment not found");
+
+                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), assignment.member.home_id);
+
+                RequireRole(caller, "Owner", "Admin");
+
+                Status? done = await this.statusRepository.GetStatusByName("Done");
+
+                if (done == null)
+                    throw new Exception("500;\"Done\" status is not configured");
+
+                await this.assignmentRepository.ApproveAssignment(assignmentId, done.id);
+
+                await this.assignmentRepository.SaveChanges();
+
+                // Award any achievements the member has now earned for this task.
+                List<Achievement> newAchievements = await this.attainmentRepository.ValidateAchievement(assignment.member_id, assignment.task_id);
+
+                if (newAchievements.Count > 0)
+                {
+                    foreach (Achievement achievement in newAchievements)
+                        await this.attainmentRepository.CreateAttainment(assignment.member_id, achievement.id);
+
+                    await this.attainmentRepository.SaveChanges();
+                }
+
+                return Ok(new ApiResponse<List<AchievementDTO>>
+                {
+                    StatusCode = 200,
+                    Message = "Assignment approved.",
+                    Data = newAchievements.ConvertAll(a => new AchievementDTO(a))
                 });
             }
             catch (Exception ex)

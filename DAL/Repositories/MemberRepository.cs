@@ -33,6 +33,7 @@ namespace TaskTaskerAPI.DAL.Repositories
             return await this._context.Members
                 .Include(m => m.home)
                 .Include(m => m.person)
+                .Include(m => m.role)
                 .Where(m => m.person_id == personID)
                 .ToListAsync();
         }

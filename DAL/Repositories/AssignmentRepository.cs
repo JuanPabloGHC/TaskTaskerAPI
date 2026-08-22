@@ -33,9 +33,10 @@ namespace TaskTaskerAPI.DAL.Repositories
             return await this._context.Assignments
                 .Where(a => a.member.home_id == homeID)
                 .Include(a => a.task)
-                .Include(a => a.member)
-                .Include(a => a.member.person)
-                .Include(a => a.member.role)
+                .Include(a => a.status)
+                .Include(a => a.member).ThenInclude(m => m.person)
+                .Include(a => a.member).ThenInclude(m => m.home)
+                .Include(a => a.member).ThenInclude(m => m.role)
                 .ToListAsync();
         }
 
@@ -142,6 +143,18 @@ namespace TaskTaskerAPI.DAL.Repositories
                 throw new Exception("404;Status not found");
 
             assignment.status_id = assignmentDTO.status.id;
+
+            this._context.Entry(assignment).State = EntityState.Modified;
+        }
+
+        public async Task ApproveAssignment(int assignmentId, int doneStatusId)
+        {
+            Assignment? assignment = await this.GetAssignmentByID(assignmentId);
+
+            if (assignment == null)
+                throw new Exception("404;Assignment not found");
+
+            assignment.status_id = doneStatusId;
 
             this._context.Entry(assignment).State = EntityState.Modified;
         }

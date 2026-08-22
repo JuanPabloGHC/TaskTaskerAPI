@@ -8,6 +8,7 @@ namespace TaskTaskerAPI.DAL.Interfaces
     {
         Task<IEnumerable<Status>> GetAllStatuses();
         Task<Status?> GetStatusByID(int id);
+        Task<Status?> GetStatusByName(string name);
         Task CreateStatus(StatusDTO statusDTO);
         Task UpdateStatus(StatusDTO statusDTO);
         Task DeleteStatus(int id);

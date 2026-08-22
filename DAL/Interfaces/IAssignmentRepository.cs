@@ -13,6 +13,7 @@ namespace TaskTaskerAPI.DAL.Interfaces
         Task CreateAssignment(AssignmentDTO assignmentDTO);
         Task UpdateAssignment(AssignmentDTO assignmentDTO);
         Task ChangeStatusAssignment(AssignmentDTO assignmentDTO);
+        Task ApproveAssignment(int assignmentId, int doneStatusId);
         Task DeleteAssignment(int id);
         Task SaveChanges();
     }
