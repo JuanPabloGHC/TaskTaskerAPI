@@ -15,30 +15,29 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         private bool disposed = false;
 
+        private readonly IMemberRepository _memberRepository;
+        private readonly ITaskRepository _taskRepository;
+        private readonly IStatusRepository _statusRepository;
+
         #endregion
 
         #region CONSTRUCTOR
 
-        public AssignmentRepository(TaskTaskerContext context)
+        public AssignmentRepository(
+            TaskTaskerContext context,
+            IMemberRepository memberRepository,
+            ITaskRepository taskRepository,
+            IStatusRepository statusRepository)
         {
             this._context = context;
+            this._memberRepository = memberRepository;
+            this._taskRepository = taskRepository;
+            this._statusRepository = statusRepository;
         }
 
         #endregion
 
         #region PUBLIC METHODS
-
-        public async Task<IEnumerable<Assignment>> GetHomeAssignments(int homeID)
-        {
-            return await this._context.Assignments
-                .Where(a => a.member.home_id == homeID)
-                .Include(a => a.task)
-                .Include(a => a.status)
-                .Include(a => a.member).ThenInclude(m => m.person)
-                .Include(a => a.member).ThenInclude(m => m.home)
-                .Include(a => a.member).ThenInclude(m => m.role)
-                .ToListAsync();
-        }
 
         public async Task<IEnumerable<Assignment>> GetMemberAssignments(int memberID)
         {
@@ -52,16 +51,33 @@ namespace TaskTaskerAPI.DAL.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Assignment>> GetUndoneMemberAssignments(int memberID)
+        public async Task<(IEnumerable<Assignment> items, int total)> GetMemberAssignmentsPaged(int memberID, bool undone, int page, int pageSize)
         {
-            return await this._context.Assignments
+            IQueryable<Assignment> query = this._context.Assignments
+                .Where(a => a.member_id == memberID)
                 .Include(a => a.task)
                 .Include(a => a.status)
                 .Include(a => a.member).ThenInclude(m => m.person)
                 .Include(a => a.member).ThenInclude(m => m.home)
-                .Include(a => a.member).ThenInclude(m => m.role)
-                .Where(a => a.member_id == memberID && a.status.name != "Done")
-                .ToListAsync();
+                .Include(a => a.member).ThenInclude(m => m.role);
+
+            if (undone)
+                query = query.Where(a => a.status.name != "Done");
+
+            return await Paginate(query, page, pageSize);
+        }
+
+        public async Task<(IEnumerable<Assignment> items, int total)> GetHomeAssignmentsPaged(int homeID, int page, int pageSize)
+        {
+            IQueryable<Assignment> query = this._context.Assignments
+                .Where(a => a.member.home_id == homeID)
+                .Include(a => a.task)
+                .Include(a => a.status)
+                .Include(a => a.member).ThenInclude(m => m.person)
+                .Include(a => a.member).ThenInclude(m => m.home)
+                .Include(a => a.member).ThenInclude(m => m.role);
+
+            return await Paginate(query, page, pageSize);
         }
 
         public async Task<Assignment?> GetAssignmentByID(int id)
@@ -81,19 +97,13 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (this.Exists(assignmentDTO.member.id, assignmentDTO.task.id, assignmentDTO.date))
                 throw new Exception("409;Assignment already exists");
 
-            MemberRepository memberRepository = new MemberRepository(this._context);
-
-            TaskRepository taskRepository = new TaskRepository(this._context);
-
-            StatusRepository statusRepository = new StatusRepository(this._context);
-
-            if (await memberRepository.GetMemberByID(assignmentDTO.member.id) == null)
+            if (await this._memberRepository.GetMemberByID(assignmentDTO.member.id) == null)
                 throw new Exception("404;Member not found");
 
-            if (await taskRepository.GetTaskByID(assignmentDTO.task.id) == null)
+            if (await this._taskRepository.GetTaskByID(assignmentDTO.task.id) == null)
                 throw new Exception("404;Task not found");
 
-            if (await statusRepository.GetStatusByID(assignmentDTO.status.id) == null)
+            if (await this._statusRepository.GetStatusByID(assignmentDTO.status.id) == null)
                 throw new Exception("404;Status not found");
 
             Assignment assignment = new Assignment(assignmentDTO);
@@ -111,14 +121,10 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (this.Exists(assignmentDTO.member.id, assignmentDTO.task.id, assignmentDTO.date))
                 throw new Exception("409;Assignment already exists");
 
-            TaskRepository taskRepository = new TaskRepository(this._context);
-
-            StatusRepository statusRepository = new StatusRepository(this._context);
-
-            if (await taskRepository.GetTaskByID(assignmentDTO.task.id) == null)
+            if (await this._taskRepository.GetTaskByID(assignmentDTO.task.id) == null)
                 throw new Exception("404;Task not found");
 
-            if (await statusRepository.GetStatusByID(assignmentDTO.status.id) == null)
+            if (await this._statusRepository.GetStatusByID(assignmentDTO.status.id) == null)
                 throw new Exception("404;Status not found");
 
             assignment.task_id = assignmentDTO.task.id;
@@ -137,9 +143,7 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (assignment == null)
                 throw new Exception("404;Assignment not found");
 
-            StatusRepository statusRepository = new StatusRepository(this._context);
-
-            if (await statusRepository.GetStatusByID(assignmentDTO.status.id) == null)
+            if (await this._statusRepository.GetStatusByID(assignmentDTO.status.id) == null)
                 throw new Exception("404;Status not found");
 
             assignment.status_id = assignmentDTO.status.id;
@@ -206,6 +210,19 @@ namespace TaskTaskerAPI.DAL.Repositories
             return this._context.Assignments
                 .Where(a => a.member_id == memberID && a.task_id == taskID && a.date == date)
                 .Any();
+        }
+
+        private static async Task<(IEnumerable<Assignment> items, int total)> Paginate(IQueryable<Assignment> query, int page, int pageSize)
+        {
+            int total = await query.CountAsync();
+
+            List<Assignment> items = await query
+                .OrderByDescending(a => a.date)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, total);
         }
 
         #endregion

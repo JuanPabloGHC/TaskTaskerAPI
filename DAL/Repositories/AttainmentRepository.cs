@@ -15,13 +15,21 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         private bool disposed = false;
 
+        private readonly IMemberRepository _memberRepository;
+        private readonly IAchievementRepository _achievementRepository;
+
         #endregion
 
         #region CONSTRUCTOR
 
-        public AttainmentRepository(TaskTaskerContext context)
+        public AttainmentRepository(
+            TaskTaskerContext context,
+            IMemberRepository memberRepository,
+            IAchievementRepository achievementRepository)
         {
             this._context = context;
+            this._memberRepository = memberRepository;
+            this._achievementRepository = achievementRepository;
         }
 
         #endregion
@@ -36,13 +44,22 @@ namespace TaskTaskerAPI.DAL.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Attainment>> GetHomeAttainmentes(int homeID)
+        public async Task<(IEnumerable<Attainment> items, int total)> GetHomeAttainmentesPaged(int homeID, int page, int pageSize)
         {
-            return await this._context.Attainments
+            IQueryable<Attainment> query = this._context.Attainments
                 .Where(a => a.member.home_id == homeID)
                 .Include(a => a.member).ThenInclude(m => m.person)
-                .Include(a => a.achievement).ThenInclude(ach => ach.task)
+                .Include(a => a.achievement).ThenInclude(ach => ach.task);
+
+            int total = await query.CountAsync();
+
+            List<Attainment> items = await query
+                .OrderByDescending(a => a.id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            return (items, total);
         }
 
         public async Task CreateAttainment(int memberID, int achievementID)
@@ -50,15 +67,11 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (this.Exists(memberID, achievementID))
                 throw new Exception("409;Attainment already exists");
 
-            MemberRepository memberRepository = new MemberRepository(this._context);
-
-            AchievementRepository achievementRepository  = new AchievementRepository(this._context);
-
-            if (await memberRepository.GetMemberByID(memberID) == null)
+            if (await this._memberRepository.GetMemberByID(memberID) == null)
                 throw new Exception("404;Member not found");
 
-            if (await achievementRepository.GetAchievementByID(achievementID) == null)
-                throw new Exception("404;Task not found");
+            if (await this._achievementRepository.GetAchievementByID(achievementID) == null)
+                throw new Exception("404;Achievement not found");
 
             Attainment attainment = new Attainment(0, memberID, achievementID);
 
@@ -67,8 +80,6 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         public async Task<List<Achievement>> ValidateAchievement(int memberID, int taskID)
         {
-            AchievementRepository achievementRepository = new AchievementRepository(this._context);
-
             return await this.GetTaskAchievements(memberID, taskID);
         }
 

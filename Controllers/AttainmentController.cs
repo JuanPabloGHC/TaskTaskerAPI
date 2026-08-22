@@ -61,19 +61,21 @@ namespace TaskTaskerAPI.Controllers
         [Authorize]
         [HttpGet]
         [Route("home/{homeId:int}")]
-        public async Task<IActionResult> GetHomeAttainments([FromRoute] int homeId)
+        public async Task<IActionResult> GetHomeAttainments([FromRoute] int homeId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), homeId);
 
             RequireMembership(caller);
 
-            List<Attainment> attainments = (List<Attainment>)await this.attainmentRepository.GetHomeAttainmentes(homeId);
+            (page, pageSize) = NormalizePaging(page, pageSize);
 
-            return Ok(new ApiResponse<List<AttainmentDTO>>
+            (IEnumerable<Attainment> items, int total) = await this.attainmentRepository.GetHomeAttainmentesPaged(homeId, page, pageSize);
+
+            return Ok(new ApiResponse<PagedResult<AttainmentDTO>>
             {
                 StatusCode = 200,
                 Message = "",
-                Data = attainments.ConvertAll(a => new AttainmentDTO(a))
+                Data = new PagedResult<AttainmentDTO>(items.Select(a => new AttainmentDTO(a)).ToList(), page, pageSize, total)
             });
         }
 

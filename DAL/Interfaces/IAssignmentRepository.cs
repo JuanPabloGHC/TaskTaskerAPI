@@ -6,9 +6,9 @@ namespace TaskTaskerAPI.DAL.Interfaces
 {
     public interface IAssignmentRepository : IDisposable
     {
-        Task<IEnumerable<Assignment>> GetHomeAssignments(int homeID);
         Task<IEnumerable<Assignment>> GetMemberAssignments(int memberID);
-        Task<IEnumerable<Assignment>> GetUndoneMemberAssignments(int memberID);
+        Task<(IEnumerable<Assignment> items, int total)> GetMemberAssignmentsPaged(int memberID, bool undone, int page, int pageSize);
+        Task<(IEnumerable<Assignment> items, int total)> GetHomeAssignmentsPaged(int homeID, int page, int pageSize);
         Task<Assignment?> GetAssignmentByID(int id);
         Task CreateAssignment(AssignmentDTO assignmentDTO);
         Task UpdateAssignment(AssignmentDTO assignmentDTO);

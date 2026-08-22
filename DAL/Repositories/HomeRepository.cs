@@ -3,6 +3,7 @@ using TaskTaskerAPI.DAL.Context;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
+using TaskTaskerAPI.Utilities;
 using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Repositories
@@ -37,6 +38,9 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         public async Task<Home> CreateHome(HomeDTO homeDTO, int ownerPersonId)
         {
+            Validate.Text("Name", homeDTO.name, 25);
+            Validate.Required("Image", homeDTO.image);
+
             if (this.Exists(homeDTO.name))
                 throw new Exception("409;Name already in use");
 
@@ -71,6 +75,9 @@ namespace TaskTaskerAPI.DAL.Repositories
 
             if (home == null)
                 throw new Exception("404;Home not found");
+
+            Validate.Text("Name", homeDTO.name, 25);
+            Validate.Required("Image", homeDTO.image);
 
             if (this.Exists(homeDTO.name, homeDTO.id))
                 throw new Exception("409;Name already in use");

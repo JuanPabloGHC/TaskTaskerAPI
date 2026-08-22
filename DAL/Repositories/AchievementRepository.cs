@@ -3,6 +3,7 @@ using TaskTaskerAPI.DAL.Context;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
+using TaskTaskerAPI.Utilities;
 using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Repositories
@@ -15,13 +16,16 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         private bool disposed = false;
 
+        private readonly ITaskRepository _taskRepository;
+
         #endregion
 
         #region CONSTRUCTOR
 
-        public AchievementRepository(TaskTaskerContext context)
+        public AchievementRepository(TaskTaskerContext context, ITaskRepository taskRepository)
         {
             this._context = context;
+            this._taskRepository = taskRepository;
         }
 
         #endregion
@@ -45,8 +49,15 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         public async Task CreateAchievement(AchievementDTO achievementDTO)
         {
+            Validate.Text("Name", achievementDTO.name, 50);
+            Validate.Positive("Days", achievementDTO.days);
+            Validate.Required("Image", achievementDTO.image);
+
             if (this.Exists(achievementDTO.name))
                 throw new Exception("409;Name already in use");
+
+            if (await this._taskRepository.GetTaskByID(achievementDTO.task.id) == null)
+                throw new Exception("404;Task not found");
 
             Achievement achievement = new Achievement(achievementDTO);
 
@@ -60,12 +71,14 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (achievement == null)
                 throw new Exception("404;Achievement not found");
 
+            Validate.Text("Name", achievementDTO.name, 50);
+            Validate.Positive("Days", achievementDTO.days);
+            Validate.Required("Image", achievementDTO.image);
+
             if (this.Exists(achievementDTO.name, achievementDTO.id))
                 throw new Exception("409;Name already in use");
 
-            TaskRepository taskRepository = new TaskRepository(this._context);
-
-            if (await taskRepository.GetTaskByID(achievementDTO.task.id) == null)
+            if (await this._taskRepository.GetTaskByID(achievementDTO.task.id) == null)
                 throw new Exception("404;Task not found");
 
             achievement.name = achievementDTO.name;

@@ -2,6 +2,7 @@
 using TaskTaskerAPI.DAL.Context;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Interfaces;
+using TaskTaskerAPI.Utilities;
 using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Repositories
@@ -42,6 +43,9 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         public async Task CreateTask(TaskDTO taskDTO)
         {
+            Validate.Text("Name", taskDTO.name, 25);
+            Validate.Required("Image", taskDTO.image);
+
             if (this.Exists(taskDTO.name))
                 throw new Exception("409;Name already in use");
 
@@ -56,6 +60,9 @@ namespace TaskTaskerAPI.DAL.Repositories
 
             if (task == null)
                 throw new Exception("404;Task not found");
+
+            Validate.Text("Name", taskDTO.name, 25);
+            Validate.Required("Image", taskDTO.image);
 
             if (this.Exists(taskDTO.name, taskDTO.id))
                 throw new Exception("409;Name already in use");

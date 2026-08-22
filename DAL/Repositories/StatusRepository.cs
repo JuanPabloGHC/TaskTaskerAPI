@@ -3,6 +3,7 @@ using TaskTaskerAPI.DAL.Context;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
+using TaskTaskerAPI.Utilities;
 using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Repositories
@@ -50,6 +51,9 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         public async Task CreateStatus(StatusDTO statusDTO)
         {
+            Validate.Text("Name", statusDTO.name, 25);
+            Validate.Text("Color", statusDTO.color, 7);
+
             if (this.Exists(statusDTO.name))
                 throw new Exception("409;Name already in use");
 
@@ -64,6 +68,9 @@ namespace TaskTaskerAPI.DAL.Repositories
 
             if (status == null)
                 throw new Exception("404;Status not found");
+
+            Validate.Text("Name", statusDTO.name, 25);
+            Validate.Text("Color", statusDTO.color, 7);
 
             if (this.Exists(statusDTO.name, statusDTO.id))
                 throw new Exception("409;Name already in use");

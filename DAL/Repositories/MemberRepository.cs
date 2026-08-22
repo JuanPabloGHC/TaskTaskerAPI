@@ -15,13 +15,24 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         private bool disposed = false;
 
+        private readonly IPersonRepository _personRepository;
+        private readonly IHomeRepository _homeRepository;
+        private readonly IRoleRepository _roleRepository;
+
         #endregion
 
         #region CONSTRUCTOR
 
-        public MemberRepository(TaskTaskerContext context)
+        public MemberRepository(
+            TaskTaskerContext context,
+            IPersonRepository personRepository,
+            IHomeRepository homeRepository,
+            IRoleRepository roleRepository)
         {
             this._context = context;
+            this._personRepository = personRepository;
+            this._homeRepository = homeRepository;
+            this._roleRepository = roleRepository;
         }
 
         #endregion
@@ -73,19 +84,13 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (this.Exists(memberDTO.person.id, memberDTO.home.id))
                 throw new Exception("409;Member already exists");
 
-            PersonRepository personRepository = new PersonRepository(this._context);
-
-            HomeRepository homeRepository = new HomeRepository(this._context);
-
-            RoleRepository roleRepository = new RoleRepository(this._context);
-
-            if (await personRepository.GetPersonByID(memberDTO.person.id) == null)
+            if (await this._personRepository.GetPersonByID(memberDTO.person.id) == null)
                 throw new Exception("404;Person not found");
 
-            if (await homeRepository.GetHomeByID(memberDTO.home.id) == null)
+            if (await this._homeRepository.GetHomeByID(memberDTO.home.id) == null)
                 throw new Exception("404;Home not found");
 
-            if (await roleRepository.GetRoleByID(memberDTO.role.id) == null)
+            if (await this._roleRepository.GetRoleByID(memberDTO.role.id) == null)
                 throw new Exception("404;Role not found");
 
             Member member = new Member(memberDTO);
@@ -100,9 +105,7 @@ namespace TaskTaskerAPI.DAL.Repositories
             if (member == null)
                 throw new Exception("404;Member not found");
 
-            RoleRepository roleRepository = new RoleRepository(this._context);
-
-            if (await roleRepository.GetRoleByID(memberDTO.role.id) == null)
+            if (await this._roleRepository.GetRoleByID(memberDTO.role.id) == null)
                 throw new Exception("404;Role not found");
 
             member.role_id = memberDTO.role.id;

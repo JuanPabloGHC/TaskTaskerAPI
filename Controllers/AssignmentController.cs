@@ -41,7 +41,7 @@ namespace TaskTaskerAPI.Controllers
         [Authorize]
         [HttpGet]
         [Route("get-all/member/{memberId:int}")]
-        public async Task<IActionResult> GetAllFromMember([FromRoute] int memberId, [FromQuery] bool undone = false)
+        public async Task<IActionResult> GetAllFromMember([FromRoute] int memberId, [FromQuery] bool undone = false, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             Member? target = await this.memberRepository.GetMemberByID(memberId);
 
@@ -56,37 +56,36 @@ namespace TaskTaskerAPI.Controllers
                 RequireRole(caller, "Owner", "Admin");
             }
 
-            List<Assignment> assignments = (List<Assignment>)(
-                undone ?
-                    await this.assignmentRepository.GetUndoneMemberAssignments(memberId)
-                :
-                    await this.assignmentRepository.GetMemberAssignments(memberId)
-            );
+            (page, pageSize) = NormalizePaging(page, pageSize);
 
-            return Ok(new ApiResponse<List<AssignmentDTO>>
+            (IEnumerable<Assignment> items, int total) = await this.assignmentRepository.GetMemberAssignmentsPaged(memberId, undone, page, pageSize);
+
+            return Ok(new ApiResponse<PagedResult<AssignmentDTO>>
             {
                 StatusCode = 200,
                 Message = "",
-                Data = assignments.ConvertAll(a => new AssignmentDTO(a))
+                Data = new PagedResult<AssignmentDTO>(items.Select(a => new AssignmentDTO(a)).ToList(), page, pageSize, total)
             });
         }
 
         [Authorize]
         [HttpGet]
         [Route("get-all/home/{homeId:int}")]
-        public async Task<IActionResult> GetAllFromHome([FromRoute] int homeId)
+        public async Task<IActionResult> GetAllFromHome([FromRoute] int homeId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), homeId);
 
             RequireMembership(caller);
 
-            List<Assignment> assignments = (List<Assignment>)await this.assignmentRepository.GetHomeAssignments(homeId);
+            (page, pageSize) = NormalizePaging(page, pageSize);
 
-            return Ok(new ApiResponse<List<AssignmentDTO>>
+            (IEnumerable<Assignment> items, int total) = await this.assignmentRepository.GetHomeAssignmentsPaged(homeId, page, pageSize);
+
+            return Ok(new ApiResponse<PagedResult<AssignmentDTO>>
             {
                 StatusCode = 200,
                 Message = "",
-                Data = assignments.ConvertAll(a => new AssignmentDTO(a))
+                Data = new PagedResult<AssignmentDTO>(items.Select(a => new AssignmentDTO(a)).ToList(), page, pageSize, total)
             });
         }
 

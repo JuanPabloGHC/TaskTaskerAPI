@@ -20,6 +20,18 @@ namespace TaskTaskerAPI.Controllers
 
         #endregion
 
+        #region PAGING
+
+        /// <summary>Normalizes paging input: page >= 1, pageSize within [1, 100].</summary>
+        protected static (int page, int pageSize) NormalizePaging(int page, int pageSize)
+        {
+            if (page < 1) page = 1;
+            pageSize = Math.Clamp(pageSize, 1, 100);
+            return (page, pageSize);
+        }
+
+        #endregion
+
         #region PERMISSION GUARDS
 
         /// <summary>Throws 403 when the caller is not a member of the home.</summary>

@@ -3,6 +3,7 @@ using TaskTaskerAPI.DAL.Context;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
+using TaskTaskerAPI.Utilities;
 using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Repositories
@@ -43,6 +44,9 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         public async Task CreateRole(RoleDTO roleDTO)
         {
+            Validate.Text("Name", roleDTO.name, 25);
+            Validate.Required("Image", roleDTO.image);
+
             if (this.Exists(roleDTO.name))
                 throw new Exception("409;Name already in use");
 
@@ -57,6 +61,9 @@ namespace TaskTaskerAPI.DAL.Repositories
 
             if (role == null)
                 throw new Exception("404;Role not found");
+
+            Validate.Text("Name", roleDTO.name, 25);
+            Validate.Required("Image", roleDTO.image);
 
             if (this.Exists(roleDTO.name, roleDTO.id))
                 throw new Exception("409;Name already in use");

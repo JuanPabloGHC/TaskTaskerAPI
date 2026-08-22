@@ -4,6 +4,7 @@ using TaskTaskerAPI.DAL.Context;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
+using TaskTaskerAPI.Utilities;
 using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Repositories
@@ -47,6 +48,11 @@ namespace TaskTaskerAPI.DAL.Repositories
 
         public async Task<Person> CreatePerson(PersonDTO personDTO)
         {
+            Validate.Text("Phone", personDTO.phone, 10);
+            Validate.Text("Name", personDTO.name, 25);
+            Validate.Text("Password", personDTO.password, 256, 6);
+            Validate.Required("Image", personDTO.image);
+
             if (this.Exists(Columns.PHONE_COLUMN, personDTO.phone))
                 throw new Exception("409;Phone already in use");
 
@@ -68,6 +74,13 @@ namespace TaskTaskerAPI.DAL.Repositories
 
             if (person == null)
                 throw new Exception("404;User not found");
+
+            Validate.Text("Phone", personDTO.phone, 10);
+            Validate.Text("Name", personDTO.name, 25);
+            Validate.Required("Image", personDTO.image);
+
+            if (!string.IsNullOrWhiteSpace(personDTO.password))
+                Validate.Text("Password", personDTO.password, 256, 6);
 
             if (this.Exists(Columns.PHONE_COLUMN, personDTO.phone, personDTO.id))
                 throw new Exception("409;Phone already in use");
