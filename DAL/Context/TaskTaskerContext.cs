@@ -34,6 +34,8 @@ namespace TaskTaskerAPI.DAL.Context
 
         public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+        public DbSet<AdminUser> AdminUsers { get; set; }
+
         #endregion
 
         #region CONSTRUCTOR

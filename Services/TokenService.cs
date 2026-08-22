@@ -57,6 +57,37 @@ namespace TaskTaskerAPI.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+        public string GenerateAdminAccessToken(AdminUser admin)
+        {
+            IConfigurationSection jwt = this._configuration.GetSection("Jwt");
+
+            SymmetricSecurityKey key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwt["Key"]!)
+            );
+
+            SigningCredentials credentials = new SigningCredentials(
+                key, SecurityAlgorithms.HmacSha256
+            );
+
+            Claim[] claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, admin.id.ToString()),
+                new Claim(JwtRegisteredClaimNames.UniqueName, admin.username),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Role, "platform_admin")
+            };
+
+            JwtSecurityToken token = new JwtSecurityToken(
+                issuer: jwt["Issuer"],
+                audience: jwt["Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(double.Parse(jwt["AdminAccessTokenMinutes"]!)),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
         public RefreshToken GenerateRefreshToken(int personId)
         {
             IConfigurationSection jwt = this._configuration.GetSection("Jwt");

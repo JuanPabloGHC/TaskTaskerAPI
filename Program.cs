@@ -40,9 +40,11 @@ builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 builder.Services.AddScoped<IAttainmentRepository, AttainmentRepository>();
 builder.Services.AddScoped<IAssignmentRepository, AssignmentRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IAdminUserRepository, AdminUserRepository>();
 
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddSingleton<IPasswordHasher<Person>, PasswordHasher<Person>>();
+builder.Services.AddSingleton<IPasswordHasher<AdminUser>, PasswordHasher<AdminUser>>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

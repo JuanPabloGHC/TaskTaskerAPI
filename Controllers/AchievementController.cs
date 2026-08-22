@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
@@ -28,6 +29,7 @@ namespace TaskTaskerAPI.Controllers
 
         #region ENDPOINTS
 
+        [Authorize]
         [HttpGet]
         [Route("get-all")]
         public async Task<IActionResult> GetAll()
@@ -56,6 +58,32 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet]
+        [Route("get/{id:int}")]
+        public async Task<IActionResult> GetByID([FromRoute] int id)
+        {
+            try
+            {
+                Achievement? achievement = await this.achievementRepository.GetAchievementByID(id);
+
+                if (achievement == null)
+                    throw new Exception("404;Achievement not found");
+
+                return Ok(new ApiResponse<AchievementDTO>
+                {
+                    StatusCode = 200,
+                    Message = "",
+                    Data = new AchievementDTO(achievement)
+                });
+            }
+            catch (Exception ex)
+            {
+                return this.CatchReturn(ex);
+            }
+        }
+
+        [Authorize(Roles = "platform_admin")]
         [HttpPost]
         [Route("create")]
         public async Task<IActionResult> Create([FromBody] AchievementDTO achievementDTO)
@@ -79,6 +107,7 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize(Roles = "platform_admin")]
         [HttpPatch]
         [Route("update/{id:int}")]
         public async Task<IActionResult> Update([FromBody] AchievementDTO achievementDTO, [FromRoute] int id)
@@ -105,6 +134,7 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize(Roles = "platform_admin")]
         [HttpDelete]
         [Route("delete/{id:int}")]
         public async Task<IActionResult> Delete([FromRoute] int id)

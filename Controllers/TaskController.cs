@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Interfaces;
 using TaskTaskerAPI.Utilities;
@@ -26,6 +27,7 @@ namespace TaskTaskerAPI.Controllers
 
         #region ENDPOINTS
 
+        [Authorize]
         [HttpGet]
         [Route("get-all")]
         public async Task<IActionResult> GetAll()
@@ -54,6 +56,32 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet]
+        [Route("get/{id:int}")]
+        public async Task<IActionResult> GetByID([FromRoute] int id)
+        {
+            try
+            {
+                DAL.Entities.Task? task = await this.taskRepository.GetTaskByID(id);
+
+                if (task == null)
+                    throw new Exception("404;Task not found");
+
+                return Ok(new ApiResponse<TaskDTO>
+                {
+                    StatusCode = 200,
+                    Message = "",
+                    Data = new TaskDTO(task)
+                });
+            }
+            catch (Exception ex)
+            {
+                return this.CatchReturn(ex);
+            }
+        }
+
+        [Authorize(Roles = "platform_admin")]
         [HttpPost]
         [Route("create")]
         public async Task<IActionResult> Create([FromBody] TaskDTO taskDTO)
@@ -77,6 +105,7 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize(Roles = "platform_admin")]
         [HttpPatch]
         [Route("update/{id:int}")]
         public async Task<IActionResult> Update([FromBody] TaskDTO taskDTO, [FromRoute] int id)
@@ -103,6 +132,7 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
+        [Authorize(Roles = "platform_admin")]
         [HttpDelete]
         [Route("delete/{id:int}")]
         public async Task<IActionResult> Delete([FromRoute] int id)

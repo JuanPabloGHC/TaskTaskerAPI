@@ -31,12 +31,14 @@ namespace TaskTaskerAPI.DAL.Repositories
         public async Task<IEnumerable<Achievement>> GetAllAchievements()
         {
             return await this._context.Achievements
+                .Include(a => a.task)
                 .ToListAsync();
         }
 
         public async Task<Achievement?> GetAchievementByID(int id)
         {
             return await this._context.Achievements
+                .Include(a => a.task)
                 .Where(a => a.id == id)
                 .FirstOrDefaultAsync();
         }
