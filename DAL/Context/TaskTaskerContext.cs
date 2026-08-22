@@ -32,6 +32,8 @@ namespace TaskTaskerAPI.DAL.Context
 
         public DbSet<Attainment> Attainments { get; set; }
 
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
         #endregion
 
         #region CONSTRUCTOR
@@ -45,6 +47,15 @@ namespace TaskTaskerAPI.DAL.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasOne<Person>()
+                .WithMany()
+                .HasForeignKey(rt => rt.person_id)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(rt => rt.token);
         }
 
         #endregion

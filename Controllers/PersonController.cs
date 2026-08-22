@@ -52,33 +52,6 @@ namespace TaskTaskerAPI.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("login")]
-        public async Task<IActionResult> Login([FromBody] PersonDTO personDTO)
-        {
-            try
-            {
-                Person? person = await this.personRepository.GetPersonByNameAndPassword(personDTO.name, personDTO.password);
-
-                if (person == null)
-                    throw new Exception("404;User not found");
-
-                personDTO = new PersonDTO(person);
-
-                return Ok(new ApiResponse<PersonDTO>
-                {
-                    StatusCode = 200,
-                    Message = "Verified user",
-                    Data = personDTO
-                });
-
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
-        }
-
         [HttpPatch]
         [Route("update/{id:int}")]
         public async Task<IActionResult> Update([FromBody] PersonDTO personDTO, [FromRoute] int id)

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using TaskTaskerAPI.DAL.Context;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
@@ -14,6 +15,8 @@ namespace TaskTaskerAPI.DAL.Repositories
         private TaskTaskerContext _context;
 
         private bool disposed = false;
+
+        private readonly IPasswordHasher<Person> _passwordHasher = new PasswordHasher<Person>();
 
         private enum Columns { PHONE_COLUMN, NAME_COLUMN };
 
@@ -35,10 +38,10 @@ namespace TaskTaskerAPI.DAL.Repositories
             return await this._context.Persons.FindAsync(id);
         }
 
-        public async Task<Person?> GetPersonByNameAndPassword(string name, string password)
+        public async Task<Person?> GetPersonByName(string name)
         {
             return await this._context.Persons
-                .Where(p => p.name == name && p.password == password)
+                .Where(p => p.name == name)
                 .FirstOrDefaultAsync();
         }
 
@@ -51,6 +54,8 @@ namespace TaskTaskerAPI.DAL.Repositories
                 throw new Exception("409;Name already in use");
 
             Person person = new Person(personDTO);
+
+            person.password = this._passwordHasher.HashPassword(person, personDTO.password);
 
             await this._context.AddAsync(person);
 
@@ -74,7 +79,8 @@ namespace TaskTaskerAPI.DAL.Repositories
 
             person.name = personDTO.name;
 
-            person.password = personDTO.password;
+            if (!string.IsNullOrWhiteSpace(personDTO.password))
+                person.password = this._passwordHasher.HashPassword(person, personDTO.password);
 
             person.image = personDTO.image;
 
