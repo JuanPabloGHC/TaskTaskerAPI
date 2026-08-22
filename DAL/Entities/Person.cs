@@ -14,18 +14,18 @@ namespace TaskTaskerAPI.DAL.Entities
 
         [Required]
         [StringLength(10)]
-        public string phone { get; set; }
+        public string phone { get; set; } = string.Empty;
 
         [Required]
         [StringLength(25)]
-        public string name { get; set; }
+        public string name { get; set; } = string.Empty;
 
         [Required]
         [StringLength(256)]
-        public string password { get; set; }
+        public string password { get; set; } = string.Empty;
 
         [Required]
-        public string image { get; set; }
+        public string image { get; set; } = string.Empty;
 
         #endregion
 

@@ -19,17 +19,17 @@ namespace TaskTaskerAPI.DAL.Entities
         [Required]
         public int person_id { get; set; }
         [ForeignKey("person_id")]
-        public Person person { get; set; }
+        public Person person { get; set; } = null!;
 
         [Required]
         public int home_id { get; set; }
         [ForeignKey("home_id")]
-        public Home home { get; set; }
+        public Home home { get; set; } = null!;
 
         [Required]
         public int role_id { get; set; }
         [ForeignKey("role_id")]
-        public Role role { get; set; }
+        public Role role { get; set; } = null!;
 
         #endregion
 

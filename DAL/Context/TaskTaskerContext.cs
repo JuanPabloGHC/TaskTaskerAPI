@@ -1,17 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using TaskTaskerAPI.DAL.Entities;
 
 namespace TaskTaskerAPI.DAL.Context
 {
     public class TaskTaskerContext: DbContext
     {
-        #region DATA MEMBERS
-
-        protected readonly IConfiguration Configuration;
-
-        #endregion
-
         #region DB SETS DEFINITION
 
         public DbSet<Person> Persons { get; set; }

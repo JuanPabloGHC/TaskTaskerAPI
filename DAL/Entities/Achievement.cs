@@ -14,13 +14,13 @@ namespace TaskTaskerAPI.DAL.Entities
 
         [Required]
         [StringLength(50)]
-        public string name { get; set; }
+        public string name { get; set; } = string.Empty;
 
         [Required]
         public int days { get; set; }
 
         [Required]
-        public string image { get; set; }
+        public string image { get; set; } = string.Empty;
 
         #endregion
 
@@ -29,7 +29,7 @@ namespace TaskTaskerAPI.DAL.Entities
         [Required]
         public int task_id { get; set; }
         [ForeignKey("task_id")]
-        public Task task { get; set; }
+        public Task task { get; set; } = null!;
 
         #endregion
 

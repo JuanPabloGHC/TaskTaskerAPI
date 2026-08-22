@@ -8,13 +8,13 @@ namespace TaskTaskerAPI.DAL.DTOs
 
         public int id { get; set; }
 
-        public string phone { get; set; }
+        public string phone { get; set; } = string.Empty;
 
-        public string name { get; set; }
+        public string name { get; set; } = string.Empty;
 
-        public string password { get; set; }
+        public string password { get; set; } = string.Empty;
 
-        public string image { get; set; }
+        public string image { get; set; } = string.Empty;
 
         #endregion
 

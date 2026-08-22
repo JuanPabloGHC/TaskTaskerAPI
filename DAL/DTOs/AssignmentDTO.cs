@@ -8,13 +8,13 @@ namespace TaskTaskerAPI.DAL.DTOs
 
         public int id { get; set; }
 
-        public MemberDTO member { get; set; }
+        public MemberDTO member { get; set; } = new MemberDTO();
 
         public DateTime date { get; set; }
 
-        public StatusDTO status { get; set; }
+        public StatusDTO status { get; set; } = new StatusDTO();
 
-        public TaskDTO task { get; set; }
+        public TaskDTO task { get; set; } = new TaskDTO();
 
         #endregion
 

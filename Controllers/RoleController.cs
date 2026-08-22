@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
@@ -9,7 +9,7 @@ namespace TaskTaskerAPI.Controllers
 {
     [ApiController]
     [Route("api/role")]
-    public class RoleController : Controller
+    public class RoleController : ControllerBase
     {
         #region DATA MEMBERS
 
@@ -33,28 +33,14 @@ namespace TaskTaskerAPI.Controllers
         [Route("get-all")]
         public async Task<IActionResult> GetAll()
         {
-            try
+            List<Role> roles = (List<Role>)await this.roleRepository.GetAllRoles();
+
+            return Ok(new ApiResponse<List<RoleDTO>>
             {
-                List<Role> roles = (List<Role>)await this.roleRepository.GetAllRoles();
-
-                List<RoleDTO> rolesDTO = new List<RoleDTO>();
-
-                foreach (Role role in roles)
-                {
-                    rolesDTO.Add(new RoleDTO(role));
-                }
-
-                return Ok(new ApiResponse<List<RoleDTO>>
-                {
-                    StatusCode = 200,
-                    Message = "",
-                    Data = rolesDTO
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "",
+                Data = roles.ConvertAll(r => new RoleDTO(r))
+            });
         }
 
         [Authorize]
@@ -62,24 +48,17 @@ namespace TaskTaskerAPI.Controllers
         [Route("get/{id:int}")]
         public async Task<IActionResult> GetByID([FromRoute] int id)
         {
-            try
-            {
-                Role? role = await this.roleRepository.GetRoleByID(id);
+            Role? role = await this.roleRepository.GetRoleByID(id);
 
-                if (role == null)
-                    throw new Exception("404;Role not found");
+            if (role == null)
+                throw new ApiException(404, "Role not found");
 
-                return Ok(new ApiResponse<RoleDTO>
-                {
-                    StatusCode = 200,
-                    Message = "",
-                    Data = new RoleDTO(role)
-                });
-            }
-            catch (Exception ex)
+            return Ok(new ApiResponse<RoleDTO>
             {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "",
+                Data = new RoleDTO(role)
+            });
         }
 
         [Authorize(Roles = "platform_admin")]
@@ -87,23 +66,16 @@ namespace TaskTaskerAPI.Controllers
         [Route("create")]
         public async Task<IActionResult> Create([FromBody] RoleDTO roleDTO)
         {
-            try
-            {
-                await this.roleRepository.CreateRole(roleDTO);
+            await this.roleRepository.CreateRole(roleDTO);
 
-                await this.roleRepository.SaveChanges();
+            await this.roleRepository.SaveChanges();
 
-                return Created("", new ApiResponse<string>
-                {
-                    StatusCode = 201,
-                    Message = "Role created successfully",
-                    Data = String.Empty
-                });
-            }
-            catch (Exception ex)
+            return Created("", new ApiResponse<string>
             {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 201,
+                Message = "Role created successfully",
+                Data = String.Empty
+            });
         }
 
         [Authorize(Roles = "platform_admin")]
@@ -111,26 +83,19 @@ namespace TaskTaskerAPI.Controllers
         [Route("update/{id:int}")]
         public async Task<IActionResult> Update([FromBody] RoleDTO roleDTO, [FromRoute] int id)
         {
-            try
+            if (id != roleDTO.id)
+                throw new ApiException(400, "ID does not match");
+
+            await this.roleRepository.UpdateRole(roleDTO);
+
+            await this.roleRepository.SaveChanges();
+
+            return Ok(new ApiResponse<string>
             {
-                if (id != roleDTO.id)
-                    throw new Exception("400;ID does not match");
-
-                await this.roleRepository.UpdateRole(roleDTO);
-
-                await this.roleRepository.SaveChanges();
-
-                return Ok(new ApiResponse<string>
-                {
-                    StatusCode = 200,
-                    Message = "Role modified successfully",
-                    Data = String.Empty
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "Role modified successfully",
+                Data = String.Empty
+            });
         }
 
         [Authorize(Roles = "platform_admin")]
@@ -138,47 +103,14 @@ namespace TaskTaskerAPI.Controllers
         [Route("delete/{id:int}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            try
+            await this.roleRepository.DeleteRole(id);
+
+            await this.roleRepository.SaveChanges();
+
+            return StatusCode(204, new ApiResponse<string>
             {
-                await this.roleRepository.DeleteRole(id);
-
-                await this.roleRepository.SaveChanges();
-
-                return StatusCode(204, new ApiResponse<string>
-                {
-                    StatusCode = 204,
-                    Message = "Role deleted successfully",
-                    Data = String.Empty
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
-        }
-
-        #endregion
-
-        #region PRIVATE METHODS
-
-        private IActionResult CatchReturn(Exception ex)
-        {
-            string[] error = ex.Message.Split(';');
-
-            if (error.Length == 1)
-            {
-                return BadRequest(new ApiResponse<string>
-                {
-                    StatusCode = 400,
-                    Message = ex.Message,
-                    Data = String.Empty
-                });
-            }
-
-            return StatusCode(Convert.ToInt32(error[0]), new ApiResponse<string>
-            {
-                StatusCode = Convert.ToInt32(error[0]),
-                Message = error[1],
+                StatusCode = 204,
+                Message = "Role deleted successfully",
                 Data = String.Empty
             });
         }

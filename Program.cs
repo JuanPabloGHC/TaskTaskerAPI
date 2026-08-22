@@ -7,6 +7,7 @@ using TaskTaskerAPI.DAL.Context;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
 using TaskTaskerAPI.DAL.Repositories;
+using TaskTaskerAPI.Middleware;
 using TaskTaskerAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -76,7 +77,18 @@ builder.Services
     });
 builder.Services.AddAuthorization();
 
+builder.Services.AddCors(options =>
+{
+    // Bearer-token API (no cookies), so allowing any origin is safe.
+    // Restrict to the web/app origins before going to production.
+    options.AddDefaultPolicy(policy =>
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+});
+
 var app = builder.Build();
+
+// Central error handling wraps the whole pipeline.
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -86,6 +98,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors();
 
 app.UseAuthentication();
 

@@ -22,17 +22,17 @@ namespace TaskTaskerAPI.DAL.Entities
         [Required]
         public int member_id { get; set; }
         [ForeignKey("member_id")]
-        public Member member { get; set; }
+        public Member member { get; set; } = null!;
 
         [Required]
         public int status_id { get; set; }
         [ForeignKey("status_id")]
-        public Status status { get; set; }
+        public Status status { get; set; } = null!;
 
         [Required]
         public int task_id { get; set; }
         [ForeignKey("task_id")]
-        public Task task { get; set; }
+        public Task task { get; set; } = null!;
 
         #endregion
 

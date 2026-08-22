@@ -15,7 +15,7 @@ namespace TaskTaskerAPI.Utilities
                 ?? user.FindFirst("sub")?.Value;
 
             if (value == null || !int.TryParse(value, out int id))
-                throw new Exception("401;Invalid or missing token");
+                throw new ApiException(401, "Invalid or missing token");
 
             return id;
         }

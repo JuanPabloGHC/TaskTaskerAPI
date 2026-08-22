@@ -35,21 +35,14 @@ namespace TaskTaskerAPI.Controllers
         [Route("mine")]
         public async Task<IActionResult> GetMine()
         {
-            try
-            {
-                List<Member> memberships = (List<Member>)await this.memberRepository.GetMemberHomes(this.GetPersonId());
+            List<Member> memberships = (List<Member>)await this.memberRepository.GetMemberHomes(this.GetPersonId());
 
-                return Ok(new ApiResponse<List<MemberDTO>>
-                {
-                    StatusCode = 200,
-                    Message = "",
-                    Data = memberships.ConvertAll(m => new MemberDTO(m, [], []))
-                });
-            }
-            catch (Exception ex)
+            return Ok(new ApiResponse<List<MemberDTO>>
             {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "",
+                Data = memberships.ConvertAll(m => new MemberDTO(m, [], []))
+            });
         }
 
         [Authorize]
@@ -57,28 +50,21 @@ namespace TaskTaskerAPI.Controllers
         [Route("get/{id:int}")]
         public async Task<IActionResult> GetByID([FromRoute] int id)
         {
-            try
+            Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), id);
+
+            RequireMembership(caller);
+
+            Home? home = await this.homeRepository.GetHomeByID(id);
+
+            if (home == null)
+                throw new ApiException(404, "Home not found");
+
+            return Ok(new ApiResponse<HomeDTO>
             {
-                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), id);
-
-                RequireMembership(caller);
-
-                Home? home = await this.homeRepository.GetHomeByID(id);
-
-                if (home == null)
-                    throw new Exception("404;Home not found");
-
-                return Ok(new ApiResponse<HomeDTO>
-                {
-                    StatusCode = 200,
-                    Message = "",
-                    Data = new HomeDTO(home)
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "",
+                Data = new HomeDTO(home)
+            });
         }
 
         [Authorize]
@@ -86,23 +72,16 @@ namespace TaskTaskerAPI.Controllers
         [Route("create")]
         public async Task<IActionResult> Create([FromBody] HomeDTO homeDTO)
         {
-            try
-            {
-                Home home = await this.homeRepository.CreateHome(homeDTO, this.GetPersonId());
+            Home home = await this.homeRepository.CreateHome(homeDTO, this.GetPersonId());
 
-                await this.homeRepository.SaveChanges();
+            await this.homeRepository.SaveChanges();
 
-                return Created("", new ApiResponse<HomeDTO>
-                {
-                    StatusCode = 201,
-                    Message = "Home created successfully",
-                    Data = new HomeDTO(home)
-                });
-            }
-            catch (Exception ex)
+            return Created("", new ApiResponse<HomeDTO>
             {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 201,
+                Message = "Home created successfully",
+                Data = new HomeDTO(home)
+            });
         }
 
         [Authorize]
@@ -110,30 +89,23 @@ namespace TaskTaskerAPI.Controllers
         [Route("update/{id:int}")]
         public async Task<IActionResult> Update([FromBody] HomeDTO homeDTO, [FromRoute] int id)
         {
-            try
+            if (id != homeDTO.id)
+                throw new ApiException(400, "ID does not match");
+
+            Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), id);
+
+            RequireRole(caller, "Owner", "Admin");
+
+            Home home = await this.homeRepository.UpdateHome(homeDTO);
+
+            await this.homeRepository.SaveChanges();
+
+            return Ok(new ApiResponse<HomeDTO>
             {
-                if (id != homeDTO.id)
-                    throw new Exception("400;ID does not match");
-
-                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), id);
-
-                RequireRole(caller, "Owner", "Admin");
-
-                Home home = await this.homeRepository.UpdateHome(homeDTO);
-
-                await this.homeRepository.SaveChanges();
-
-                return Ok(new ApiResponse<HomeDTO>
-                {
-                    StatusCode = 200,
-                    Message = "Home modified successfully",
-                    Data = new HomeDTO(home)
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "Home modified successfully",
+                Data = new HomeDTO(home)
+            });
         }
 
         [Authorize]
@@ -141,27 +113,20 @@ namespace TaskTaskerAPI.Controllers
         [Route("delete/{id:int}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            try
+            Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), id);
+
+            RequireRole(caller, "Owner");
+
+            await this.homeRepository.DeleteHome(id);
+
+            await this.homeRepository.SaveChanges();
+
+            return StatusCode(204, new ApiResponse<string>
             {
-                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), id);
-
-                RequireRole(caller, "Owner");
-
-                await this.homeRepository.DeleteHome(id);
-
-                await this.homeRepository.SaveChanges();
-
-                return StatusCode(204, new ApiResponse<string>
-                {
-                    StatusCode = 204,
-                    Message = "Home deleted successfully",
-                    Data = String.Empty
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 204,
+                Message = "Home deleted successfully",
+                Data = String.Empty
+            });
         }
 
         #endregion

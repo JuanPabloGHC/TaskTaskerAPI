@@ -32,25 +32,16 @@ namespace TaskTaskerAPI.Controllers
         [Route("signup")]
         public async Task<IActionResult> Signup([FromBody] PersonDTO personDTO)
         {
-            try
+            Person person = await this.personRepository.CreatePerson(personDTO);
+
+            await this.personRepository.SaveChanges();
+
+            return Created("", new ApiResponse<PersonDTO>
             {
-                Person person = await this.personRepository.CreatePerson(personDTO);
-
-                await this.personRepository.SaveChanges();
-
-                personDTO = new PersonDTO(person);
-
-                return Created("", new ApiResponse<PersonDTO>
-                {
-                    StatusCode = 201,
-                    Message = "User created successfully",
-                    Data = personDTO
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 201,
+                Message = "User created successfully",
+                Data = new PersonDTO(person)
+            });
         }
 
         [Authorize]
@@ -58,24 +49,17 @@ namespace TaskTaskerAPI.Controllers
         [Route("me")]
         public async Task<IActionResult> Me()
         {
-            try
-            {
-                Person? person = await this.personRepository.GetPersonByID(this.GetPersonId());
+            Person? person = await this.personRepository.GetPersonByID(this.GetPersonId());
 
-                if (person == null)
-                    throw new Exception("404;User not found");
+            if (person == null)
+                throw new ApiException(404, "User not found");
 
-                return Ok(new ApiResponse<PersonDTO>
-                {
-                    StatusCode = 200,
-                    Message = "",
-                    Data = new PersonDTO(person)
-                });
-            }
-            catch (Exception ex)
+            return Ok(new ApiResponse<PersonDTO>
             {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "",
+                Data = new PersonDTO(person)
+            });
         }
 
         [Authorize]
@@ -83,31 +67,22 @@ namespace TaskTaskerAPI.Controllers
         [Route("update/{id:int}")]
         public async Task<IActionResult> Update([FromBody] PersonDTO personDTO, [FromRoute] int id)
         {
-            try
+            if (id != this.GetPersonId())
+                throw new ApiException(403, "You can only update your own account");
+
+            if (id != personDTO.id)
+                throw new ApiException(400, "ID does not match");
+
+            Person person = await this.personRepository.UpdatePerson(personDTO);
+
+            await this.personRepository.SaveChanges();
+
+            return Ok(new ApiResponse<PersonDTO>
             {
-                if (id != this.GetPersonId())
-                    throw new Exception("403;You can only update your own account");
-
-                if (id != personDTO.id)
-                    throw new Exception("400;ID does not match");
-
-                Person person = await this.personRepository.UpdatePerson(personDTO);
-
-                await this.personRepository.SaveChanges();
-
-                personDTO = new PersonDTO(person);
-
-                return Ok(new ApiResponse<PersonDTO>
-                {
-                    StatusCode = 200,
-                    Message = "User modified successfully",
-                    Data = personDTO
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "User modified successfully",
+                Data = new PersonDTO(person)
+            });
         }
 
         [Authorize]
@@ -115,26 +90,19 @@ namespace TaskTaskerAPI.Controllers
         [Route("delete/{id:int}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            try
+            if (id != this.GetPersonId())
+                throw new ApiException(403, "You can only delete your own account");
+
+            await this.personRepository.DeletePerson(id);
+
+            await this.personRepository.SaveChanges();
+
+            return StatusCode(204, new ApiResponse<string>
             {
-                if (id != this.GetPersonId())
-                    throw new Exception("403;You can only delete your own account");
-
-                await this.personRepository.DeletePerson(id);
-
-                await this.personRepository.SaveChanges();
-
-                return StatusCode(204, new ApiResponse<string>
-                {
-                    StatusCode = 204,
-                    Message = "User deleted successfully",
-                    Data = String.Empty
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 204,
+                Message = "User deleted successfully",
+                Data = String.Empty
+            });
         }
 
         #endregion

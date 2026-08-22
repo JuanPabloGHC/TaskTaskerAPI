@@ -35,34 +35,27 @@ namespace TaskTaskerAPI.Controllers
         [Route("member/{memberId:int}")]
         public async Task<IActionResult> GetMemberAttainments([FromRoute] int memberId)
         {
-            try
+            Member? target = await this.memberRepository.GetMemberByID(memberId);
+
+            if (target == null)
+                throw new ApiException(404, "Member not found");
+
+            // A member sees their own; Owners/Admins can see any member's.
+            if (target.person_id != this.GetPersonId())
             {
-                Member? target = await this.memberRepository.GetMemberByID(memberId);
+                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), target.home_id);
 
-                if (target == null)
-                    throw new Exception("404;Member not found");
-
-                // A member sees their own; Owners/Admins can see any member's.
-                if (target.person_id != this.GetPersonId())
-                {
-                    Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), target.home_id);
-
-                    RequireRole(caller, "Owner", "Admin");
-                }
-
-                List<Attainment> attainments = (List<Attainment>)await this.attainmentRepository.GetMemberAttainmentes(memberId);
-
-                return Ok(new ApiResponse<List<AchievementDTO>>
-                {
-                    StatusCode = 200,
-                    Message = "",
-                    Data = attainments.ConvertAll(a => new AchievementDTO(a.achievement))
-                });
+                RequireRole(caller, "Owner", "Admin");
             }
-            catch (Exception ex)
+
+            List<Attainment> attainments = (List<Attainment>)await this.attainmentRepository.GetMemberAttainmentes(memberId);
+
+            return Ok(new ApiResponse<List<AchievementDTO>>
             {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "",
+                Data = attainments.ConvertAll(a => new AchievementDTO(a.achievement))
+            });
         }
 
         [Authorize]
@@ -70,25 +63,18 @@ namespace TaskTaskerAPI.Controllers
         [Route("home/{homeId:int}")]
         public async Task<IActionResult> GetHomeAttainments([FromRoute] int homeId)
         {
-            try
+            Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), homeId);
+
+            RequireMembership(caller);
+
+            List<Attainment> attainments = (List<Attainment>)await this.attainmentRepository.GetHomeAttainmentes(homeId);
+
+            return Ok(new ApiResponse<List<AttainmentDTO>>
             {
-                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), homeId);
-
-                RequireMembership(caller);
-
-                List<Attainment> attainments = (List<Attainment>)await this.attainmentRepository.GetHomeAttainmentes(homeId);
-
-                return Ok(new ApiResponse<List<AttainmentDTO>>
-                {
-                    StatusCode = 200,
-                    Message = "",
-                    Data = attainments.ConvertAll(a => new AttainmentDTO(a))
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "",
+                Data = attainments.ConvertAll(a => new AttainmentDTO(a))
+            });
         }
 
         #endregion

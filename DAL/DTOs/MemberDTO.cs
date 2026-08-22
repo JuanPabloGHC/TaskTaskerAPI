@@ -8,15 +8,15 @@ namespace TaskTaskerAPI.DAL.DTOs
 
         public int id { get; set; }
 
-        public PersonDTO person { get; set; }
+        public PersonDTO person { get; set; } = new PersonDTO();
 
-        public HomeDTO home { get; set; }
+        public HomeDTO home { get; set; } = new HomeDTO();
 
-        public RoleDTO role { get; set; }
+        public RoleDTO role { get; set; } = new RoleDTO();
 
-        public List<AchievementDTO> achievements { get; set; }
+        public List<AchievementDTO> achievements { get; set; } = new List<AchievementDTO>();
 
-        public List<AssignmentDTO> assignments { get; set; }
+        public List<AssignmentDTO> assignments { get; set; } = new List<AssignmentDTO>();
 
         #endregion
 

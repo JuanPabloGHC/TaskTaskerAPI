@@ -43,115 +43,32 @@ namespace TaskTaskerAPI.Controllers
         [Route("get-all/member/{memberId:int}")]
         public async Task<IActionResult> GetAllFromMember([FromRoute] int memberId, [FromQuery] bool undone = false)
         {
-            try
+            Member? target = await this.memberRepository.GetMemberByID(memberId);
+
+            if (target == null)
+                throw new ApiException(404, "Member not found");
+
+            // Members see their own assignments; Owners/Admins can see any member's.
+            if (target.person_id != this.GetPersonId())
             {
-                Member? target = await this.memberRepository.GetMemberByID(memberId);
-
-                if (target == null)
-                    throw new Exception("404;Member not found");
-
-                // Members see their own assignments; Owners/Admins can see any member's.
-                if (target.person_id != this.GetPersonId())
-                {
-                    Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), target.home_id);
-
-                    RequireRole(caller, "Owner", "Admin");
-                }
-
-                List<Assignment> assignments = (List<Assignment>)(
-                    undone ?
-                        await this.assignmentRepository.GetUndoneMemberAssignments(memberId)
-                    :
-                        await this.assignmentRepository.GetMemberAssignments(memberId)
-                );
-
-                List<AssignmentDTO> assignmentDTOs = new List<AssignmentDTO>();
-
-                foreach (Assignment assignment in assignments)
-                {
-                    assignmentDTOs.Add(new AssignmentDTO(assignment));
-                }
-
-                return Ok(new ApiResponse<List<AssignmentDTO>>
-                {
-                    StatusCode = 200,
-                    Message = "",
-                    Data = assignmentDTOs
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
-        }
-
-        [Authorize]
-        [HttpPost]
-        [Route("create")]
-        public async Task<IActionResult> Create([FromBody] AssignmentDTO assignmentDTO)
-        {
-            try
-            {
-                Member? targetMember = await this.memberRepository.GetMemberByID(assignmentDTO.member.id);
-
-                if (targetMember == null)
-                    throw new Exception("404;Member not found");
-
-                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), targetMember.home_id);
+                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), target.home_id);
 
                 RequireRole(caller, "Owner", "Admin");
-
-                await this.assignmentRepository.CreateAssignment(assignmentDTO);
-
-                await this.assignmentRepository.SaveChanges();
-
-                return Created("", new ApiResponse<string>
-                {
-                    StatusCode = 201,
-                    Message = "Assignment created successfully.",
-                    Data = string.Empty
-                });
             }
-            catch (Exception ex)
+
+            List<Assignment> assignments = (List<Assignment>)(
+                undone ?
+                    await this.assignmentRepository.GetUndoneMemberAssignments(memberId)
+                :
+                    await this.assignmentRepository.GetMemberAssignments(memberId)
+            );
+
+            return Ok(new ApiResponse<List<AssignmentDTO>>
             {
-                return this.CatchReturn(ex);
-            }
-        }
-
-        [Authorize]
-        [HttpPatch]
-        [Route("update/{assignmentId:int}")]
-        public async Task<IActionResult> Update([FromRoute] int assignmentId, [FromBody] AssignmentDTO assignmentDTO)
-        {
-            try
-            {
-                if (assignmentId != assignmentDTO.id)
-                    throw new Exception("400;ID does not match");
-
-                Assignment? assignment = await this.assignmentRepository.GetAssignmentByID(assignmentId);
-
-                if (assignment == null)
-                    throw new Exception("404;Assignment not found");
-
-                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), assignment.member.home_id);
-
-                RequireRole(caller, "Owner", "Admin");
-
-                await this.assignmentRepository.UpdateAssignment(assignmentDTO);
-
-                await this.assignmentRepository.SaveChanges();
-
-                return Ok(new ApiResponse<string>
-                {
-                    StatusCode = 200,
-                    Message = "Assignment updated successfully.",
-                    Data = string.Empty
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "",
+                Data = assignments.ConvertAll(a => new AssignmentDTO(a))
+            });
         }
 
         [Authorize]
@@ -159,25 +76,73 @@ namespace TaskTaskerAPI.Controllers
         [Route("get-all/home/{homeId:int}")]
         public async Task<IActionResult> GetAllFromHome([FromRoute] int homeId)
         {
-            try
+            Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), homeId);
+
+            RequireMembership(caller);
+
+            List<Assignment> assignments = (List<Assignment>)await this.assignmentRepository.GetHomeAssignments(homeId);
+
+            return Ok(new ApiResponse<List<AssignmentDTO>>
             {
-                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), homeId);
+                StatusCode = 200,
+                Message = "",
+                Data = assignments.ConvertAll(a => new AssignmentDTO(a))
+            });
+        }
 
-                RequireMembership(caller);
+        [Authorize]
+        [HttpPost]
+        [Route("create")]
+        public async Task<IActionResult> Create([FromBody] AssignmentDTO assignmentDTO)
+        {
+            Member? targetMember = await this.memberRepository.GetMemberByID(assignmentDTO.member.id);
 
-                List<Assignment> assignments = (List<Assignment>)await this.assignmentRepository.GetHomeAssignments(homeId);
+            if (targetMember == null)
+                throw new ApiException(404, "Member not found");
 
-                return Ok(new ApiResponse<List<AssignmentDTO>>
-                {
-                    StatusCode = 200,
-                    Message = "",
-                    Data = assignments.ConvertAll(a => new AssignmentDTO(a))
-                });
-            }
-            catch (Exception ex)
+            Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), targetMember.home_id);
+
+            RequireRole(caller, "Owner", "Admin");
+
+            await this.assignmentRepository.CreateAssignment(assignmentDTO);
+
+            await this.assignmentRepository.SaveChanges();
+
+            return Created("", new ApiResponse<string>
             {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 201,
+                Message = "Assignment created successfully.",
+                Data = string.Empty
+            });
+        }
+
+        [Authorize]
+        [HttpPatch]
+        [Route("update/{assignmentId:int}")]
+        public async Task<IActionResult> Update([FromRoute] int assignmentId, [FromBody] AssignmentDTO assignmentDTO)
+        {
+            if (assignmentId != assignmentDTO.id)
+                throw new ApiException(400, "ID does not match");
+
+            Assignment? assignment = await this.assignmentRepository.GetAssignmentByID(assignmentId);
+
+            if (assignment == null)
+                throw new ApiException(404, "Assignment not found");
+
+            Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), assignment.member.home_id);
+
+            RequireRole(caller, "Owner", "Admin");
+
+            await this.assignmentRepository.UpdateAssignment(assignmentDTO);
+
+            await this.assignmentRepository.SaveChanges();
+
+            return Ok(new ApiResponse<string>
+            {
+                StatusCode = 200,
+                Message = "Assignment updated successfully.",
+                Data = string.Empty
+            });
         }
 
         [Authorize]
@@ -185,42 +150,35 @@ namespace TaskTaskerAPI.Controllers
         [Route("change-status/{assignmentId:int}")]
         public async Task<IActionResult> ChangeStatus([FromRoute] int assignmentId, [FromBody] AssignmentDTO assignmentDTO)
         {
-            try
+            if (assignmentId != assignmentDTO.id)
+                throw new ApiException(400, "ID does not match");
+
+            Assignment? assignment = await this.assignmentRepository.GetAssignmentByID(assignmentId);
+
+            if (assignment == null)
+                throw new ApiException(404, "Assignment not found");
+
+            // Only the assignee can change the status of their own assignment.
+            if (assignment.member.person_id != this.GetPersonId())
+                throw new ApiException(403, "You do not have permission");
+
+            // "Done" is granted only by an Owner/Admin via the approval flow, so the
+            // assignee cannot mark it done directly (they submit it for review instead).
+            Status? requested = await this.statusRepository.GetStatusByID(assignmentDTO.status.id);
+
+            if (requested != null && requested.name == "Done")
+                throw new ApiException(403, "Only an Owner or Admin can approve a task as Done");
+
+            await this.assignmentRepository.ChangeStatusAssignment(assignmentDTO);
+
+            await this.assignmentRepository.SaveChanges();
+
+            return Ok(new ApiResponse<string>
             {
-                if (assignmentId != assignmentDTO.id)
-                    throw new Exception("400;ID does not match");
-
-                Assignment? assignment = await this.assignmentRepository.GetAssignmentByID(assignmentId);
-
-                if (assignment == null)
-                    throw new Exception("404;Assignment not found");
-
-                // Only the assignee can change the status of their own assignment.
-                if (assignment.member.person_id != this.GetPersonId())
-                    throw new Exception("403;You do not have permission");
-
-                // "Done" is granted only by an Owner/Admin via the approval flow, so the
-                // assignee cannot mark it done directly (they submit it for review instead).
-                Status? requested = await this.statusRepository.GetStatusByID(assignmentDTO.status.id);
-
-                if (requested != null && requested.name == "Done")
-                    throw new Exception("403;Only an Owner or Admin can approve a task as Done");
-
-                await this.assignmentRepository.ChangeStatusAssignment(assignmentDTO);
-
-                await this.assignmentRepository.SaveChanges();
-
-                return Ok(new ApiResponse<string>
-                {
-                    StatusCode = 200,
-                    Message = "Assignment status changed successfully.",
-                    Data = string.Empty
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "Assignment status changed successfully.",
+                Data = string.Empty
+            });
         }
 
         [Authorize]
@@ -228,48 +186,41 @@ namespace TaskTaskerAPI.Controllers
         [Route("approve/{assignmentId:int}")]
         public async Task<IActionResult> Approve([FromRoute] int assignmentId)
         {
-            try
+            Assignment? assignment = await this.assignmentRepository.GetAssignmentByID(assignmentId);
+
+            if (assignment == null)
+                throw new ApiException(404, "Assignment not found");
+
+            Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), assignment.member.home_id);
+
+            RequireRole(caller, "Owner", "Admin");
+
+            Status? done = await this.statusRepository.GetStatusByName("Done");
+
+            if (done == null)
+                throw new ApiException(500, "\"Done\" status is not configured");
+
+            await this.assignmentRepository.ApproveAssignment(assignmentId, done.id);
+
+            await this.assignmentRepository.SaveChanges();
+
+            // Award any achievements the member has now earned for this task.
+            List<Achievement> newAchievements = await this.attainmentRepository.ValidateAchievement(assignment.member_id, assignment.task_id);
+
+            if (newAchievements.Count > 0)
             {
-                Assignment? assignment = await this.assignmentRepository.GetAssignmentByID(assignmentId);
+                foreach (Achievement achievement in newAchievements)
+                    await this.attainmentRepository.CreateAttainment(assignment.member_id, achievement.id);
 
-                if (assignment == null)
-                    throw new Exception("404;Assignment not found");
-
-                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), assignment.member.home_id);
-
-                RequireRole(caller, "Owner", "Admin");
-
-                Status? done = await this.statusRepository.GetStatusByName("Done");
-
-                if (done == null)
-                    throw new Exception("500;\"Done\" status is not configured");
-
-                await this.assignmentRepository.ApproveAssignment(assignmentId, done.id);
-
-                await this.assignmentRepository.SaveChanges();
-
-                // Award any achievements the member has now earned for this task.
-                List<Achievement> newAchievements = await this.attainmentRepository.ValidateAchievement(assignment.member_id, assignment.task_id);
-
-                if (newAchievements.Count > 0)
-                {
-                    foreach (Achievement achievement in newAchievements)
-                        await this.attainmentRepository.CreateAttainment(assignment.member_id, achievement.id);
-
-                    await this.attainmentRepository.SaveChanges();
-                }
-
-                return Ok(new ApiResponse<List<AchievementDTO>>
-                {
-                    StatusCode = 200,
-                    Message = "Assignment approved.",
-                    Data = newAchievements.ConvertAll(a => new AchievementDTO(a))
-                });
+                await this.attainmentRepository.SaveChanges();
             }
-            catch (Exception ex)
+
+            return Ok(new ApiResponse<List<AchievementDTO>>
             {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 200,
+                Message = "Assignment approved.",
+                Data = newAchievements.ConvertAll(a => new AchievementDTO(a))
+            });
         }
 
         [Authorize]
@@ -277,32 +228,25 @@ namespace TaskTaskerAPI.Controllers
         [Route("delete/{assignmentId:int}")]
         public async Task<IActionResult> Delete([FromRoute] int assignmentId)
         {
-            try
+            Assignment? assignment = await this.assignmentRepository.GetAssignmentByID(assignmentId);
+
+            if (assignment == null)
+                throw new ApiException(404, "Assignment not found");
+
+            Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), assignment.member.home_id);
+
+            RequireRole(caller, "Owner", "Admin");
+
+            await this.assignmentRepository.DeleteAssignment(assignmentId);
+
+            await this.assignmentRepository.SaveChanges();
+
+            return StatusCode(204, new ApiResponse<string>
             {
-                Assignment? assignment = await this.assignmentRepository.GetAssignmentByID(assignmentId);
-
-                if (assignment == null)
-                    throw new Exception("404;Assignment not found");
-
-                Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), assignment.member.home_id);
-
-                RequireRole(caller, "Owner", "Admin");
-
-                await this.assignmentRepository.DeleteAssignment(assignmentId);
-
-                await this.assignmentRepository.SaveChanges();
-
-                return StatusCode(204, new ApiResponse<string>
-                {
-                    StatusCode = 204,
-                    Message = "Assignment deleted successfully",
-                    Data = String.Empty
-                });
-            }
-            catch (Exception ex)
-            {
-                return this.CatchReturn(ex);
-            }
+                StatusCode = 204,
+                Message = "Assignment deleted successfully",
+                Data = String.Empty
+            });
         }
 
         #endregion

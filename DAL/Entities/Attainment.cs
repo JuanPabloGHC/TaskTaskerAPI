@@ -18,12 +18,12 @@ namespace TaskTaskerAPI.DAL.Entities
         [Required]
         public int member_id { get; set; }
         [ForeignKey("member_id")]
-        public Member member { get; set; }
+        public Member member { get; set; } = null!;
 
         [Required]
         public int achievement_id { get; set; }
         [ForeignKey("achievement_id")]
-        public Achievement achievement { get; set; }
+        public Achievement achievement { get; set; } = null!;
 
         #endregion
 

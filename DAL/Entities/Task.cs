@@ -14,10 +14,10 @@ namespace TaskTaskerAPI.DAL.Entities
 
         [Required]
         [StringLength(25)]
-        public string name { get; set; }
+        public string name { get; set; } = string.Empty;
 
         [Required]
-        public string image { get; set; }
+        public string image { get; set; } = string.Empty;
 
         #endregion
 
