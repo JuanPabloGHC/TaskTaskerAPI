@@ -361,14 +361,23 @@ Los cuatro comparten la misma forma:
 
 ---
 
-## Semilla inicial (obligatoria)
+## Semilla inicial
 
-Una base recién creada está **vacía**. Para que la app funcione, la Web (admin) debe sembrar el catálogo:
+El catálogo base se **siembra automáticamente al arrancar** la API (`DbSeeder`, idempotente: solo inserta lo que falta, es seguro en cada arranque). Incluye:
 
-1. Crear el **primer admin** (bootstrap): `POST /api/admin/create`.
-2. Login admin y crear:
-   - **Roles**: `Owner`, `Admin`, `Member` (los nombres importan: la lógica de permisos y la creación de casas dependen de ellos).
-   - **Estados**: al menos `Pending`, `En revisión`, `Done` (los nombres `En revisión` y `Done` los usa el flujo de aprobación).
-   - **Tasks** y **Achievements** según el producto.
+- **Roles**: `Owner`, `Admin`, `Member`.
+- **Estados**: `Pending`, `En revisión`, `Done`.
+- **Tasks** de ejemplo: Barrer, Trapear, Lavar trastes, Sacar basura, Tender cama, Lavar ropa.
+- **Achievements** de ejemplo: Limpiador (5× Barrer), Trapeador experto (5× Trapear), Rey de la cocina (10× Lavar trastes).
 
-> Sin los roles `Owner`/`Member` y los estados `En revisión`/`Done`, la creación de casas y el flujo de aprobación fallarán.
+Las imágenes se generan como **placeholders base64 (SVG)**; reemplázalas desde el panel web.
+
+Lo **único manual** es crear el **primer admin de plataforma** (bootstrap), ya que el seed no crea admins por seguridad:
+
+```bash
+curl -X POST http://localhost:5235/api/admin/create \
+  -H "Content-Type: application/json" \
+  -d '{"username":"TU_USUARIO","password":"TU_PASSWORD"}'
+```
+
+> Los nombres de roles (`Owner`/`Admin`/`Member`) y estados (`En revisión`/`Done`) son sensibles: la lógica de permisos, la creación de casas y el flujo de aprobación dependen de ellos.

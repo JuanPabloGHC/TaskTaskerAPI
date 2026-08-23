@@ -119,6 +119,20 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Seed the base catalog (roles, statuses, tasks, achievements) if missing.
+using (var scope = app.Services.CreateScope())
+{
+    var seedContext = scope.ServiceProvider.GetRequiredService<TaskTaskerContext>();
+    try
+    {
+        await TaskTaskerAPI.DAL.DbSeeder.SeedAsync(seedContext);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Database seeding failed (is the database migrated?)");
+    }
+}
+
 // Central error handling wraps the whole pipeline.
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
