@@ -8,6 +8,7 @@ namespace TaskTaskerAPI.DAL.Interfaces
     {
         Task<Person?> GetPersonByID(int id);
         Task<Person?> GetPersonByName(string name);
+        Task<Person?> GetPersonByPhone(string phone);
         Task<Person> CreatePerson(PersonDTO personDTO);
         Task<Person> UpdatePerson(PersonDTO personDTO);
         Task DeletePerson(int id);

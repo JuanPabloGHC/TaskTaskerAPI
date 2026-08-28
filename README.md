@@ -303,7 +303,8 @@ Acceso: 🔓 anónimo · 🔒 autenticado (cualquier token) · 👤 dueño del r
 |---|---|---|---|
 | GET | `/get-all/{homeId}` | 🏠 miembro | Miembros de la casa |
 | GET | `/get/{memberId}` | 🏠 mismo hogar / sí mismo | Detalle del miembro (incluye sus logros y asignaciones) |
-| POST | `/create` | 🏠 Owner/Admin | Añadir miembro (`person{id}`, `home{id}`, `role{id}`) |
+| POST | `/create` | 🏠 Owner/Admin | Añadir miembro por id (`person{id}`, `home{id}`, `role{id}`) |
+| POST | `/add-by-phone` | 🏠 Owner/Admin | **Añadir miembro por teléfono** (`{ homeId, phone, roleId }`) — sin aceptación; la casa aparece en el `/home/mine` de la persona |
 | PATCH | `/update/{memberId}` | 🏠 Owner | Cambiar el rol de un miembro |
 | DELETE | `/remove/{memberId}` | 🏠 Owner | Quitar miembro |
 

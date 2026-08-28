@@ -46,6 +46,13 @@ namespace TaskTaskerAPI.DAL.Repositories
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<Person?> GetPersonByPhone(string phone)
+        {
+            return await this._context.Persons
+                .Where(p => p.phone == phone)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<Person> CreatePerson(PersonDTO personDTO)
         {
             Validate.Text("Phone", personDTO.phone, 10);

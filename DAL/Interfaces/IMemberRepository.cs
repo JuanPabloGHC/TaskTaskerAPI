@@ -11,6 +11,7 @@ namespace TaskTaskerAPI.DAL.Interfaces
         Task<Member?> GetMemberByID(int id);
         Task<Member?> GetMemberByPersonAndHome(int personId, int homeId);
         Task CreateMember(MemberDTO memberDTO);
+        Task<Member> CreateMemberByPhone(int homeId, string phone, int roleId);
         Task UpdateMember(MemberDTO memberDTO);
         Task DeleteMember(int id);
         Task SaveChanges();

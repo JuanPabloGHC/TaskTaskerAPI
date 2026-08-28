@@ -3,6 +3,7 @@ using TaskTaskerAPI.DAL.Context;
 using TaskTaskerAPI.DAL.DTOs;
 using TaskTaskerAPI.DAL.Entities;
 using TaskTaskerAPI.DAL.Interfaces;
+using TaskTaskerAPI.Utilities;
 using Task = System.Threading.Tasks.Task;
 
 namespace TaskTaskerAPI.DAL.Repositories
@@ -96,6 +97,42 @@ namespace TaskTaskerAPI.DAL.Repositories
             Member member = new Member(memberDTO);
 
             await this._context.AddAsync(member);
+        }
+
+        public async Task<Member> CreateMemberByPhone(int homeId, string phone, int roleId)
+        {
+            Validate.Required("Phone", phone);
+
+            Person? person = await this._personRepository.GetPersonByPhone(phone);
+
+            if (person == null)
+                throw new Exception("404;No account exists with that phone number");
+
+            Home? home = await this._homeRepository.GetHomeByID(homeId);
+
+            if (home == null)
+                throw new Exception("404;Home not found");
+
+            Role? role = await this._roleRepository.GetRoleByID(roleId);
+
+            if (role == null)
+                throw new Exception("404;Role not found");
+
+            if (this.Exists(person.id, homeId))
+                throw new Exception("409;This person is already a member of this home");
+
+            // Linking the tracked entities lets EF fill the FKs and returns a fully
+            // populated member for the response DTO without an extra query.
+            Member member = new Member
+            {
+                person = person,
+                home = home,
+                role = role
+            };
+
+            await this._context.AddAsync(member);
+
+            return member;
         }
 
         public async Task UpdateMember(MemberDTO memberDTO)

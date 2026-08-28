@@ -111,6 +111,27 @@ namespace TaskTaskerAPI.Controllers
         }
 
         [Authorize]
+        [HttpPost]
+        [Route("add-by-phone")]
+        public async Task<IActionResult> AddByPhone([FromBody] AddMemberByPhoneDTO request)
+        {
+            Member? caller = await this.memberRepository.GetMemberByPersonAndHome(this.GetPersonId(), request.homeId);
+
+            RequireRole(caller, "Owner", "Admin");
+
+            Member added = await this.memberRepository.CreateMemberByPhone(request.homeId, request.phone, request.roleId);
+
+            await this.memberRepository.SaveChanges();
+
+            return Created("", new ApiResponse<MemberDTO>
+            {
+                StatusCode = 201,
+                Message = "Member added successfully",
+                Data = new MemberDTO(added, [], [])
+            });
+        }
+
+        [Authorize]
         [HttpPatch]
         [Route("update/{memberId:int}")]
         public async Task<IActionResult> Update([FromBody] MemberDTO memberDTO, [FromRoute] int memberId)
