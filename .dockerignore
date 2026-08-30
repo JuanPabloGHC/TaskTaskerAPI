@@ -1,0 +1,11 @@
+bin/
+obj/
+.vs/
+.git/
+.github/
+.env
+*.user
+*.md
+WEB_DEV_CONTEXT.md
+APP_DEV_CONTEXT.md
+Properties/launchSettings.json

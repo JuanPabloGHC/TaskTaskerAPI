@@ -16,6 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 DotNetEnv.Env.Load();
 
+// Hosts like Render inject the port to listen on via the PORT env var.
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 
 var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY")
@@ -136,14 +141,14 @@ using (var scope = app.Services.CreateScope())
 // Central error handling wraps the whole pipeline.
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Swagger is available in all environments (handy for testing the deployed API).
+app.UseSwagger();
+app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+// TLS is terminated by the host's proxy (e.g. Render), so only redirect to HTTPS
+// locally; forcing it behind the proxy can cause redirect loops.
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 
 app.UseCors();
 
